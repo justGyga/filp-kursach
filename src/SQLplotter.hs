@@ -1,4 +1,4 @@
-module Database where
+module SQLplotter where
 
 import Data.String (fromString)
 import Data.Text (Text)
