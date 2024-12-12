@@ -4,6 +4,7 @@ module UserModule where
 
 import Database.SQLite.Simple
 import WalletModule
+import SQLplotter (addUserSession)
 
 data User = User {id :: Int, name :: String, surname :: String, email :: String, password :: String, wallet :: Int} deriving (Show)
 
@@ -31,7 +32,7 @@ findAccount db = do
   email <- getLine
   putStrLn "Введите ваш пароль:"
   password <- getLine
-  users <- query db "SELECT * FROM users WHERE email = ? AND password = ? LIMIT 1;" (email, password) :: IO [User]
+  users <- query db "SELECT id FROM users WHERE email = ? AND password = ? LIMIT 1;" (email, password) :: IO [Only Integer]
   if null users
     then do
       putStrLn "Аккаунт не найден"
@@ -42,8 +43,8 @@ findAccount db = do
         "1" -> findAccount db
         _ -> putStrLn "Выход..."
     else do
-      let user = head users
-      putStrLn (show user)
+      let Only id = head users
+      addUserSession id
 
 createAccount :: Connection -> IO ()
 createAccount db = do
@@ -70,6 +71,14 @@ createAccount db = do
       putStrLn "Введите вашу фамилию:"
       surname <- getLine
 
-      let walletId = createWallet db
-      putStrLn (show walletId)
-      execute db "INSERT INTO users (name, surname, email, password, wallet) VALUES (?, ?, ?, ?, ?);" (name, surname, email, password, walletId)
+      ids <- query_ db "SELECT id FROM users ORDER BY id DESC LIMIT 1;" :: IO [Only Integer] 
+      let newId  = if null ids
+            then 1 
+            else let Only lastId = head ids in lastId + 1 
+
+      -- putStrLn ("Ваш id: "++show newId)
+      walletId <- createWallet db
+      -- putStrLn ("Ваш ID кошелька: " ++ show walletId)
+      execute db "INSERT INTO users (id, name, surname, email, password, wallet) VALUES (?, ?, ?, ?, ?, ?);" (newId, name, surname, email, password, walletId)
+      addUserSession newId
+

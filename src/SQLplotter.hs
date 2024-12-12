@@ -1,11 +1,43 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-
 {-# HLINT ignore "Use when" #-}
 module SQLplotter where
 
 import Data.String (fromString)
 import Database.SQLite.Simple
 import System.Directory (doesFileExist, removeFile)
+
+addSessionTable :: IO ()
+addSessionTable = do
+  dbExists <- doesFileExist "session.db"
+  if dbExists
+    then do
+      removeFile "session.db"
+    else return ()
+
+  sqlConnection <- open "session.db"
+  execute_
+    sqlConnection (fromString $
+      "CREATE TABLE IF NOT EXISTS session ("
+        ++"id INTEGER PRIMARY KEY"
+        ++");"
+    )
+  close sqlConnection
+
+addUserSession :: Integer -> IO ()
+addUserSession id = do
+  sqlConnection <- open "session.db"
+  execute sqlConnection "INSERT INTO session (id) VALUES (?)" (Only id)
+  close sqlConnection
+
+getUserSession :: IO Integer
+getUserSession = do
+  sqlConnection <- open "session.db"
+  result <- query_ sqlConnection "SELECT id FROM session LIMIT 1;"
+  close sqlConnection
+  case result of
+    [Only id] -> return id
+    _         -> return (-1)
 
 initializeDB :: IO ()
 initializeDB = do
@@ -169,6 +201,8 @@ initializeDB = do
           ++ "FOREIGN KEY (\"addressId\") REFERENCES addresses(id)"
           ++ ");"
     )
+  
+  close sqlConnection
 
 seedDB :: IO ()
 seedDB = do
@@ -298,3 +332,5 @@ seedDB = do
           ++ "( 4, 1, 8, 1, 'new', '2024-08-16T09:00:00.000Z', 17500000),"
           ++ "( 5, 1, 1, 1, 'close', '2024-08-16T09:00:00.000Z', 67000);"
     )
+
+  close sqlConnection
