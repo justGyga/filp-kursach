@@ -23,7 +23,8 @@ afterAuth = do
   putStrLn "1. Просмотреть доступные варианты к покупке"
   putStrLn "2. Создать объявление"
   putStrLn "3. Просмотреть свой аккаунт"
-  putStrLn "4. Выход"
+  putStrLn "4. Постмотреть свои объявления"
+  putStrLn "5. Выход"
   putStrLn "Введите выбранный пункт меню:"
 
   choice <- getLine
@@ -31,5 +32,6 @@ afterAuth = do
     "1" -> signIn
     "2" -> signUp
     "3" -> signUp
-    "4" -> putStrLn "Выход..."
+    "4" -> signUp
+    "5" -> putStrLn "Выход..."
     _ -> putStrLn "Неверный выбор, попробуйте снова." >> startMenu
