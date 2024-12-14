@@ -2,9 +2,10 @@
 
 module UserModule where
 
-import Database.SQLite.Simple
-import WalletModule
-import SQLplotter (addUserSession)
+import           Database.SQLite.Simple
+import           Prelude                hiding (id)
+import           SQLplotter             (addUserSession)
+import           WalletModule
 
 data User = User {id :: Int, name :: String, surname :: String, email :: String, password :: String, wallet :: Int} deriving (Show)
 
@@ -12,13 +13,15 @@ instance FromRow User where
   fromRow = User <$> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToRow User where
-  toRow (User id name surname email password wallet) = toRow (id, name, surname, email, password, wallet)
+  toRow (User userId name surname email password wallet) =
+    toRow (userId, name, surname, email, password, wallet)
 
-signIn :: IO ()
+signIn :: IO Bool
 signIn = do
   dataBase <- open "local.db"
-  findAccount dataBase
+  result <- findAccount dataBase
   close dataBase
+  return result
 
 signUp :: IO ()
 signUp = do
@@ -26,7 +29,7 @@ signUp = do
   createAccount dataBase
   close dataBase
 
-findAccount :: Connection -> IO ()
+findAccount :: Connection -> IO Bool
 findAccount db = do
   putStrLn "Введите вашу электронную почту:"
   email <- getLine
@@ -41,10 +44,14 @@ findAccount db = do
       choice <- getLine
       case choice of
         "1" -> findAccount db
-        _ -> putStrLn "Выход..."
+        _   -> do
+          putStrLn "Выход..."
+          return False
     else do
-      let Only id = head users
-      addUserSession id
+      putStrLn "Аккаунт найден"
+      let Only userId = head users
+      addUserSession userId
+      return True
 
 createAccount :: Connection -> IO ()
 createAccount db = do
@@ -64,21 +71,24 @@ createAccount db = do
       choice <- getLine
       case choice of
         "1" -> createAccount db
-        _ -> putStrLn "Выход..."
+        _   -> do
+          putStrLn "Выход..."
+          return ()
     else do
       putStrLn "Введите ваше имя:"
       name <- getLine
       putStrLn "Введите вашу фамилию:"
       surname <- getLine
 
-      ids <- query_ db "SELECT id FROM users ORDER BY id DESC LIMIT 1;" :: IO [Only Integer] 
+      ids <- query_ db "SELECT id FROM users ORDER BY id DESC LIMIT 1;" :: IO [Only Integer]
       let newId  = if null ids
-            then 1 
-            else let Only lastId = head ids in lastId + 1 
+            then 1
+            else let Only lastId = head ids in lastId + 1
 
       -- putStrLn ("Ваш id: "++show newId)
       walletId <- createWallet db
       -- putStrLn ("Ваш ID кошелька: " ++ show walletId)
       execute db "INSERT INTO users (id, name, surname, email, password, wallet) VALUES (?, ?, ?, ?, ?, ?);" (newId, name, surname, email, password, walletId)
       addUserSession newId
+      putStrLn "Аккаунт успешно создан."
 
