@@ -2,7 +2,7 @@
 
 module Menu where
 
-import           Ads           (viewAvailableAds)
+import           Ads           (viewAvailableAds, filterAvailableAds)
 import           Control.Monad (when)
 import           UserModule    (signIn, signUp)
 
@@ -42,7 +42,7 @@ afterAuth = do
   choice <- getLine
   case choice of
     "1" -> do
-      viewAvailableAds
+      filterAvailableAds
       afterAuth
     "2" -> do
       -- Здесь можно добавить вызов функции для создания объявления

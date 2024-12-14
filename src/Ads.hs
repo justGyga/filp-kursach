@@ -6,13 +6,18 @@ module Ads
   , AdWithAddress(..)
   , getMyAds
   , viewAvailableAds
+  , filterAvailableAds
   ) where
 
 import           Commons                        (clearCLI)
+import           Control.Monad                  (when)
+import           Data.Maybe                     (isJust, fromJust)
 import           Data.String                    (fromString)
+import           Data.Text                      (Text, unpack)
+import qualified Data.Text                      as T
 import           Database.SQLite.Simple
-import           Database.SQLite.Simple.FromRow
-import           Database.SQLite.Simple.ToRow
+import           Database.SQLite.Simple.FromRow ()
+import           Database.SQLite.Simple.ToField (toField)
 import           SQLplotter                     (getUserSession)
 
 -- | Структура данных для адреса, соответствующая таблице `addresses`.
@@ -58,9 +63,15 @@ instance ToRow Ad where
 
 -- | Структура данных, объединяющая объявление и его адрес.
 data AdWithAddress = AdWithAddress
-  { ad      :: Ad       -- ^ Объявление
-  , address :: Address  -- ^ Адрес объекта недвижимости
+  { ad         :: Ad        -- ^ Объявление
+  , address    :: Address   -- ^ Адрес объекта недвижимости
+  , objectType :: Integer   -- ^ Тип объекта недвижимости
+  , area       :: Int       -- ^ Площадь объекта
   } deriving (Show)
+
+-- | Экземпляр `FromRow` для `AdWithAddress`, позволяет считывать записи из базы данных.
+instance FromRow AdWithAddress where
+  fromRow = AdWithAddress <$> fromRow <*> fromRow <*> field <*> field
 
 -- | Функция для получения и отображения объявлений пользователя.
 getMyAds :: IO ()
@@ -82,10 +93,10 @@ viewAvailableAds = do
   if null ads
     then putStrLn "Нет доступных объявлений для просмотра." -- Если объявлений нет, выводим сообщение
     else do
-      adsWithAddress <- mapM (getAdWithAddress dataBase) ads -- Для каждого объявления получаем его адрес
+      adsWithAddress <- mapM (getAdWithAddress dataBase) ads -- Для каждого объявления получаем его адрес и площадь
       clearCLI
       putStrLn "\n----- Доступные Объявления -----\n"
-      mapM_ printAdWithAddress adsWithAddress             -- Выводим каждое объявление с адресом
+      mapM_ printAdWithAddress adsWithAddress             -- Выводим каждое объявление с адресом и площадью
 
   close dataBase                                        -- Закрываем соединение с базой данных
 
@@ -93,7 +104,9 @@ viewAvailableAds = do
 getAdWithAddress :: Connection -> Ad -> IO AdWithAddress
 getAdWithAddress conn ad = do
   addr <- getAddress conn ad                             -- Получаем адрес для объявления
-  return $ AdWithAddress ad addr                          -- Возвращаем объединённую структуру
+  -- Здесь мы не получаем площадь, поскольку viewAvailableAds не использует фильтрацию
+  -- Площадь будет установлена в 0 или другим значением по умолчанию
+  return $ AdWithAddress ad addr (objectType ad) 0      -- Возвращаем объединённую структуру с площадью = 0
 
 -- | Функция для получения адреса объекта на основе типа объекта и его ID.
 getAddress :: Connection -> Ad -> IO Address
@@ -142,7 +155,7 @@ getAddressFromCommercialRealEstates :: Connection -> Integer -> IO Address
 getAddressFromCommercialRealEstates conn objId = do
   results <- query conn "SELECT addressId FROM commercialRealEstates WHERE id = ?;" (Only objId) :: IO [Only Integer]
   case results of
-    [Only addrId] -> getAddressById conn addrId           -- Если адрес найден, получаем его детали
+    [Only addrId] -> getAddressById conn addrId           -- Если адрес найден, получаем его
     _             -> return defaultAddress                -- Иначе, возвращаем дефолтный адрес
 
 -- | Функция для получения полной информации об адресе по `addressId`.
@@ -178,12 +191,12 @@ printAd ad = do
   putStrLn $ "Описание:\t" ++ description ad
   putStrLn "-----------------------------------"
 
--- | Вспомогательная функция для форматирования и вывода объявления вместе с адресом.
+-- | Вспомогательная функция для форматирования и вывода объявления вместе с адресом и площадью.
 printAdWithAddress :: AdWithAddress -> IO ()
-printAdWithAddress (AdWithAddress ad addr) = do
+printAdWithAddress (AdWithAddress ad addr ot area) = do
   putStrLn $ "ID Объявления:\t" ++ show (adId ad)
   putStrLn $ "ID Продавца:\t" ++ show (seller ad)
-  putStrLn $ "Тип Объекта:\t" ++ showObjectType (objectType ad)
+  putStrLn $ "Тип Объекта:\t" ++ showObjectType ot
   putStrLn $ "ID Объекта:\t" ++ show (objectId ad)
   putStrLn $ "Стоимость:\t" ++ show (cost ad) ++ " RUB"
   putStrLn $ "Описание:\t" ++ description ad
@@ -200,6 +213,7 @@ printAdWithAddress (AdWithAddress ad addr) = do
   case doorNumber addr of
     Just dn -> putStrLn $ "Номер Двери:\t" ++ show dn
     Nothing -> putStrLn "Номер Двери:\t\tНе указан"
+  putStrLn $ "Площадь:\t" ++ show area ++ " кв.м."
   putStrLn "-----------------------------------"
 
 -- | Функция для преобразования `objectType` в читаемый формат.
@@ -210,3 +224,136 @@ showObjectType 3 = "Земельный участок"
 showObjectType 4 = "Гараж"
 showObjectType 5 = "Коммерческая недвижимость"
 showObjectType _ = "Неизвестный тип объекта"
+
+-- | Новая функция для фильтрации доступных объявлений
+filterAvailableAds :: IO ()
+filterAvailableAds = do
+  dataBase <- open "local.db"
+
+  -- Получение доступных фильтров
+  districts <- query_ dataBase "SELECT DISTINCT district FROM addresses;" :: IO [Only Text]
+  objectTypes <- query_ dataBase "SELECT DISTINCT objectType FROM ads;" :: IO [Only Integer]
+
+  -- Сбор фильтров от пользователя
+  putStrLn "\n----- Фильтрация Объявлений -----\n"
+  putStrLn "\n----- Район -----\n"
+
+  -- Фильтр по району
+  putStrLn "1. Выбрать район"
+  putStrLn "2. Пропустить"
+  districtChoice <- getLine
+  districtFilter <- case districtChoice of
+    "1" -> do
+      putStrLn "Доступные районы:"
+      mapM_ (\(i, d) -> putStrLn $ show i ++ ". " ++ T.unpack d) (zip [1..] (map fromOnly districts))
+      putStrLn "Введите номер района:"
+      idx <- getLine
+      let selected = lookup (read idx :: Int) (zip [1..] (map fromOnly districts))
+      case selected of
+        Just d  -> return (Just d)
+        Nothing -> putStrLn "Неверный выбор района." >> return Nothing
+    _   -> return Nothing
+
+  putStrLn "\n----- Тип объекта -----\n"
+  putStrLn "1. Выбрать тип объекта"
+  putStrLn "2. Пропустить"
+  objectTypeChoice <- getLine
+  objectTypeFilter <- case objectTypeChoice of
+    "1" -> do
+      putStrLn "Доступные типы объектов:"
+      mapM_ (\(i, ot) -> putStrLn $ show i ++ ". " ++ showObjectType ot) (zip [1..] (map fromOnly objectTypes))
+      putStrLn "Введите номер типа объекта:"
+      idx <- getLine
+      let selected = lookup (read idx :: Int) (zip [1..] (map fromOnly objectTypes))
+      case selected of
+        Just ot -> return (Just ot)
+        Nothing -> putStrLn "Неверный выбор типа объекта." >> return Nothing
+    _   -> return Nothing
+
+  putStrLn "\n----- Максимальная стоимость -----\n"
+  putStrLn "1. Ввести значение"
+  putStrLn "2. Пропустить"
+  maxCostChoice <- getLine
+  maxCostFilter <- case maxCostChoice of
+    "1" -> do
+      putStrLn "Введите максимальную стоимость:"
+      input <- getLine
+      case reads input :: [(Float, String)] of
+        [(mc, "")] -> return (Just mc)
+        _          -> putStrLn "Некорректное значение." >> return Nothing
+    _   -> return Nothing
+
+  putStrLn "\n----- Минимальная площадь объекта -----\n"
+  putStrLn "1. Ввести значение"
+  putStrLn "2. Пропустить"
+  minAreaChoice <- getLine
+  minAreaFilter <- case minAreaChoice of
+    "1" -> do
+      putStrLn "Введите минимальную площадь объекта:"
+      input <- getLine
+      case reads input :: [(Int, String)] of
+        [(ma, "")] -> return (Just ma)
+        _          -> putStrLn "Некорректное значение." >> return Nothing
+    _   -> return Nothing
+
+  -- Определение базового запроса с UNION ALL
+  let baseQuery = "SELECT ads.*, addresses.*, objects.area AS objectArea " ++
+                  "FROM ads " ++
+                  "JOIN ( " ++
+                  "  SELECT id, objectType, area, addressId FROM flats " ++
+                  "  UNION ALL " ++
+                  "  SELECT id, objectType, area, addressId FROM houses " ++
+                  "  UNION ALL " ++
+                  "  SELECT id, objectType, area, addressId FROM landPlot " ++
+                  "  UNION ALL " ++
+                  "  SELECT id, objectType, area, addressId FROM garages " ++
+                  "  UNION ALL " ++
+                  "  SELECT id, objectType, area, addressId FROM commercialRealEstates " ++
+                  ") AS objects ON ads.objectId = objects.id " ++
+                  "JOIN addresses ON objects.addressId = addresses.id "
+
+      -- Построение условий WHERE
+      let conditions = concat [
+            "WHERE 1=1 ",
+            case objectTypeFilter of
+              Just ot -> "AND objects.objectType = ? "
+              Nothing -> "",
+            if isJust districtFilter then "AND addresses.district = ? " else "",
+            if isJust maxCostFilter then "AND ads.cost <= ? " else "",
+            if isJust minAreaFilter then "AND objects.area >= ? " else ""
+          ]
+
+      -- Полный запрос
+      let finalQuery = baseQuery ++ conditions ++ ";"
+
+      -- Собираем параметры
+          params = concat [
+                    case objectTypeFilter of
+                      Just ot -> [toField ot]
+                      Nothing -> [],
+                    maybe [] (\d -> [toField d]) districtFilter,
+                    maybe [] (\mc -> [toField mc]) maxCostFilter,
+                    maybe [] (\ma -> [toField ma]) minAreaFilter
+                  ]
+
+  -- Вывод запроса и параметров для отладки
+  putStrLn "\nВыполняемый SQL-запрос:"
+  putStrLn finalQuery
+  putStrLn "\nПараметры запроса:"
+  mapM_ print params
+
+  -- Выполнение запроса
+  adsWithAddress <- query dataBase (fromString finalQuery) params :: IO [AdWithAddress]
+
+  -- clearCLI -- Временно отключено для отладки
+  if null adsWithAddress
+    then putStrLn "Нет объявлений, соответствующих выбранным фильтрам."
+    else do
+      putStrLn "\n----- Отфильтрованные Объявления -----\n"
+      mapM_ printAdWithAddress adsWithAddress
+
+  putStrLn "\n1. Назад"
+  backChoice <- getLine
+  when (backChoice == "1") filterAvailableAds
+
+  close dataBase

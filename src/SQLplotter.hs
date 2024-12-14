@@ -3,6 +3,8 @@
 {-# HLINT ignore "Use when" #-}
 module SQLplotter where
 
+import           Control.Exception      (SomeException, catch)
+import           Control.Monad          (void)
 import           Data.String            (fromString)
 import           Database.SQLite.Simple
 import           System.Directory       (doesFileExist, removeFile)
@@ -62,10 +64,10 @@ initializeDB = do
   putStrLn "------------------------------------"
   putStrLn "------------------------------------"
 
-  -- Создание таблицы addresses
+  -- Создание таблиц (адреса, wallets, users, ads, meetings, deals, flats, houses, landPlot, garages, commercialRealEstates)
   execute_ sqlConnection (fromString $
     "CREATE TABLE IF NOT EXISTS addresses ("
-      ++ "id INTEGER PRIMARY KEY,"
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
       ++ "state VARCHAR(100) NOT NULL,"
       ++ "city VARCHAR(100) NOT NULL,"
       ++ "district VARCHAR(100) NOT NULL,"
@@ -76,54 +78,49 @@ initializeDB = do
       ++ "\"doorNumber\" INTEGER"
       ++ ");")
 
-  -- Создание таблицы wallets
   execute_ sqlConnection (fromString $
     "CREATE TABLE IF NOT EXISTS wallets ("
-      ++ "id INT PRIMARY KEY,"
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
       ++ "balance FLOAT"
       ++ ");")
 
-  -- Создание таблицы users
   execute_ sqlConnection (fromString $
     "CREATE TABLE IF NOT EXISTS users ("
-      ++ "id INT PRIMARY KEY,"
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
       ++ "name VARCHAR(255),"
       ++ "surname VARCHAR(255),"
       ++ "email VARCHAR(255),"
       ++ "password VARCHAR(255),"
-      ++ "wallet INT,"
+      ++ "wallet INTEGER,"
       ++ "FOREIGN KEY (wallet) REFERENCES wallets(id)"
       ++ ");")
 
-  -- Создание таблицы ads
   execute_ sqlConnection (fromString $
     "CREATE TABLE IF NOT EXISTS ads ("
-      ++ "id INT PRIMARY KEY,"
-      ++ "seller INT,"
-      ++ "\"objectId\" INT,"
-      ++ "\"objectType\" INT,"
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+      ++ "seller INTEGER,"
+      ++ "\"objectId\" INTEGER,"
+      ++ "\"objectType\" INTEGER,"
       ++ "cost FLOAT,"
       ++ "description TEXT,"
       ++ "FOREIGN KEY (seller) REFERENCES users(id)"
       ++ ");")
 
-  -- Создание таблицы meetings
   execute_ sqlConnection (fromString $
     "CREATE TABLE IF NOT EXISTS meetings ("
-      ++ "id INT PRIMARY KEY,"
-      ++ "buyer INT,"
-      ++ "\"adId\" INT,"
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+      ++ "buyer INTEGER,"
+      ++ "\"adId\" INTEGER,"
       ++ "date DATE,"
       ++ "FOREIGN KEY (buyer) REFERENCES users(id),"
       ++ "FOREIGN KEY (\"adId\") REFERENCES ads(id)"
       ++ ");")
 
-  -- Создание таблицы deals
   execute_ sqlConnection (fromString $
     "CREATE TABLE IF NOT EXISTS deals ("
-      ++ "id INT PRIMARY KEY,"
-      ++ "buyer INT,"
-      ++ "\"adId\" INT,"
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+      ++ "buyer INTEGER,"
+      ++ "\"adId\" INTEGER,"
       ++ "\"dealType\" VARCHAR(255),"
       ++ "status VARCHAR(255),"
       ++ "date DATE,"
@@ -132,60 +129,55 @@ initializeDB = do
       ++ "FOREIGN KEY (\"adId\") REFERENCES ads(id)"
       ++ ");")
 
-  -- Создание таблицы flats
   execute_ sqlConnection (fromString $
     "CREATE TABLE IF NOT EXISTS flats ("
-      ++ "id INT PRIMARY KEY,"
-      ++ "area FLOAT,"
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+      ++ "area INT,"
       ++ "\"roomCount\" INT,"
-      ++ "\"addressId\" INT,"
+      ++ "\"addressId\" INTEGER,"
       ++ "floor INT,"
       ++ "\"floorsCount\" INT,"
       ++ "\"balconyArea\" INT,"
       ++ "FOREIGN KEY (\"addressId\") REFERENCES addresses(id)"
       ++ ");")
 
-  -- Создание таблицы houses
   execute_ sqlConnection (fromString $
     "CREATE TABLE IF NOT EXISTS houses ("
-      ++ "id INT PRIMARY KEY,"
-      ++ "area FLOAT,"
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+      ++ "area INT,"
       ++ "\"areType\" INT,"
-      ++ "\"addressId\" INT,"
+      ++ "\"addressId\" INTEGER,"
       ++ "\"roomCount\" INT,"
       ++ "\"floorsCount\" INT,"
       ++ "\"basementArea\" INT,"
       ++ "FOREIGN KEY (\"addressId\") REFERENCES addresses(id)"
       ++ ");")
 
-  -- Создание таблицы landPlot
   execute_ sqlConnection (fromString $
-    "CREATE TABLE IF NOT EXISTS \"landPlot\" ("
-      ++ "id INT PRIMARY KEY,"
-      ++ "area FLOAT,"
+    "CREATE TABLE IF NOT EXISTS landPlot ("
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+      ++ "area INT,"
       ++ "\"landCategory\" INT,"
-      ++ "\"addressId\" INT,"
+      ++ "\"addressId\" INTEGER,"
       ++ "FOREIGN KEY (\"addressId\") REFERENCES addresses(id)"
       ++ ");")
 
-  -- Создание таблицы garages
   execute_ sqlConnection (fromString $
     "CREATE TABLE IF NOT EXISTS garages ("
-      ++ "id INT PRIMARY KEY,"
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
       ++ "area INT,"
       ++ "security BOOLEAN,"
-      ++ "\"addressId\" INT,"
+      ++ "\"addressId\" INTEGER,"
       ++ "FOREIGN KEY (\"addressId\") REFERENCES addresses(id)"
       ++ ");")
 
-  -- Создание таблицы commercialRealEstates
   execute_ sqlConnection (fromString $
-    "CREATE TABLE IF NOT EXISTS \"commercialRealEstates\" ("
-      ++ "id INT PRIMARY KEY,"
+    "CREATE TABLE IF NOT EXISTS commercialRealEstates ("
+      ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
       ++ "area INT,"
       ++ "\"objectType\" INT,"
       ++ "\"buildingType\" INT,"
-      ++ "\"addressId\" INT,"
+      ++ "\"addressId\" INTEGER,"
       ++ "FOREIGN KEY (\"addressId\") REFERENCES addresses(id)"
       ++ ");")
 
@@ -204,35 +196,44 @@ seedDB = do
 
   -- Вставка данных в таблицу addresses (добавлены новые адреса)
   execute_ sqlConnection (fromString $
-    "INSERT INTO addresses (state, city, district, \"postalCode\", \"streetName\", \"houseNumber\", entrance, \"doorNumber\") VALUES "
-      ++ "('Томская область', 'Томск', 'Кировский', '100001', 'Улица1', '12', 1, 101),"
-      ++ "('Томская область', 'Томск', 'Кировский', '100002', 'Улица2', '13', 1, 102),"
-      ++ "('Томская область', 'Томск', 'Ленинский', '100003', 'Улица3', '14', 2, 103),"
-      ++ "('Томская область', 'Томск', 'Ленинский', '100004', 'Улица4', '15', 2, 104),"
-      ++ "('Томская область', 'Томск', 'Ленинский', '100005', 'Улица5', '16', 3, 105),"
-      ++ "('Томская область', 'Томск', 'Ленинский', '100019', 'Улица19', '30', 10, 119),"
-      ++ "('Томская область', 'Томск', 'Ленинский', '100018', 'Улица18', '29', 9, 118),"
-      ++ "('Томская область', 'Томск', 'Ленинский', '100020', 'Улица20', '31', 10, 120),"
-      ++ "('Томская область', 'Томск', 'Советский', '100010', 'Улица10', '21', 5, 110),"
-      ++ "('Томская область', 'Томск', 'Советский', '100011', 'Улица11', '22', 6, 111),"
-      ++ "('Томская область', 'Томск', 'Советский', '100012', 'Улица12', '23', 6, 112),"
-      ++ "('Томская область', 'Томск', 'Советский', '100016', 'Улица16', '27', 8, 116),"
-      ++ "('Томская область', 'Томск', 'Советский', '100017', 'Улица17', '28', 9, 117),"
-      ++ "('Томская область', 'Томск', 'Октябрьский', '100006', 'Улица6', '17', 3, 106),"
-      ++ "('Томская область', 'Томск', 'Октябрьский', '100007', 'Улица7', '18', 4, 107),"
-      ++ "('Томская область', 'Томск', 'Октябрьский', '100008', 'Улица8', '19', 4, 108),"
-      ++ "('Томская область', 'Томск', 'Октябрьский', '100009', 'Улица9', '20', 5, 109),"
-      ++ "('Томская область', 'Томск', 'Октябрьский', '100013', 'Улица13', '24', 7, 113),"
-      ++ "('Томская область', 'Томск', 'Октябрьский', '100014', 'Улица14', '25', 7, 114),"
-      ++ "('Томская область', 'Томск', 'Октябрьский', '100015', 'Улица15', '26', 8, 115),"
-      ++ "('Томская область', 'Томск', 'Советский', '100021', 'Улица21', '32', 11, 121),"
-      ++ "('Томская область', 'Томск', 'Советский', '100022', 'Улица22', '33', 12, 122);")
+    "INSERT INTO addresses (state, city, district, postalCode, streetName, houseNumber, entrance, doorNumber) VALUES "
+      ++ "('Tomsk region', 'Tomsk', 'Kirovsky', '100001', 'Street1', '12', 1, 101),"
+      ++ "('Tomsk region', 'Tomsk', 'Kirovsky', '100002', 'Ulitsa2', '13', 1, 102),"
+      ++ "('Tomsk region', 'Tomsk', 'Leninsky', '100003', 'Ulitsa3', '14', 2, 103),"
+      ++ "('Tomsk region', 'Tomsk', 'Leninsky', '100004', 'Ulitsa4', '15', 2, 104),"
+      ++ "('Tomsk region', 'Tomsk', 'Leninsky', '100005', 'Ulitsa5', '16', 3, 105),"
+      ++ "('Tomsk region', 'Tomsk', 'Leninsky', '100019', 'Ulitsa19', '30', 10, 119),"
+      ++ "('Tomsk region', 'Tomsk', 'Leninsky', '100018', 'Ulitsa18', '29', 9, 118),"
+      ++ "('Tomsk region', 'Tomsk', 'Leninsky', '100020', 'Ulitsa20', '31', 10, 120),"
+      ++ "('Tomsk region', 'Tomsk', 'Sovetsky', '100010', 'Street10', '21', 5, 110),"
+      ++ "('Tomsk region', 'Tomsk', 'Sovetsky', '100011', 'Ulitsa11', '22', 6, 111),"
+      ++ "('Tomsk region', 'Tomsk', 'Sovetsky', '100012', 'Street12', '23', 6, 112),"
+      ++ "('Tomsk region', 'Tomsk', 'Sovetsky', '100016', 'Ulitsa16', '27', 8, 116),"
+      ++ "('Tomsk region', 'Tomsk', 'Sovetsky', '100017', 'Ulitsa17', '28', 9, 117),"
+      ++ "('Tomsk region', 'Tomsk', 'Oktyabrsky', '100006', 'Ulitsa6', '17', 3, 106),"
+      ++ "('Tomsk region', 'Tomsk', 'Oktyabrsky', '100007', 'Street7', '18', 4, 107),"
+      ++ "('Tomsk region', 'Tomsk', 'Oktyabrsky', '100008', 'Ulitsa8', '19', 4, 108),"
+      ++ "('Tomsk region', 'Tomsk', 'Oktyabrsky', '100009', 'Ulitsa9', '20', 5, 109),"
+      ++ "('Tomsk region', 'Tomsk', 'Oktyabrsky', '100013', 'Ulitsa13', '24', 7, 113),"
+      ++ "('Tomsk region', 'Tomsk', 'Oktyabrsky', '100014', 'Ulitsa14', '25', 7, 114),"
+      ++ "('Tomsk region', 'Tomsk', 'Oktyabrsky', '100015', 'Ulitsa15', '26', 8, 115),"
+      ++ "('Tomsk region', 'Tomsk', 'Sovetsky', '100021', 'Street21', '32', 11, 121),"
+      ++ "('Tomsk region', 'Tomsk', 'Sovetsky', '100022', 'Ulitsa22', '33', 12, 122),"
+      ++ "('Tomsk region', 'Tomsk', 'Leninsky', '100023', 'Ulitsa23', '34', 13, 123), "
+      ++ "('Tomsk region', 'Tomsk', 'Leninsky', '100024', 'Ulitsa24', '35', 14, 124);")
 
-  -- Вставка данных в таблицу wallets, users, ads и deals остается без изменений
+  -- Вставка данных в таблицу flats (добавлены новые записи)
+  execute_ sqlConnection (fromString $
+    "INSERT INTO flats (id, area, roomCount, addressId, floor, floorsCount, balconyArea) VALUES "
+      ++ "(1, 45, 2, 9, 6, 2, 10), "
+      ++ "(2, 34, 1, 10, 2, 1, 0), "
+      ++ "(3, 60, 3, 1, 5, 10, 15), "  -- Новая квартира в Kirovsky
+      ++ "(4, 55, 2, 2, 3, 5, 8), "     -- Ещё одна квартира в Kirovsky
+      ++ "(6, 50, 3, 18, 4, 2, 15);")
 
   -- Вставка данных в таблицу houses (добавлены новые записи)
   execute_ sqlConnection (fromString $
-    "INSERT INTO houses (id, area, \"areType\", \"addressId\", \"roomCount\", \"floorsCount\", \"basementArea\") VALUES "
+    "INSERT INTO houses (id, area, areType, addressId, roomCount, floorsCount, basementArea) VALUES "
       ++ "(1, 1320, 2, 7, 6, 2, 0), "
       ++ "(2, 1520, 1, 8, 2, 1, 0), "
       ++ "(3, 1600, 1, 11, 4, 2, 500), "
@@ -241,7 +242,7 @@ seedDB = do
 
   -- Вставка данных в таблицу landPlot (добавлены новые записи)
   execute_ sqlConnection (fromString $
-    "INSERT INTO \"landPlot\" (id, area, \"landCategory\", \"addressId\") VALUES "
+    "INSERT INTO landPlot (id, area, landCategory, addressId) VALUES "
       ++ "(1, 3500, 1, 5), "
       ++ "(2, 1900, 3, 6), "
       ++ "(4, 4000, 2, 13), "
@@ -249,17 +250,16 @@ seedDB = do
 
   -- Вставка данных в таблицу garages (добавлены новые записи)
   execute_ sqlConnection (fromString $
-    "INSERT INTO garages (id, area, security, \"addressId\") VALUES "
+    "INSERT INTO garages (id, area, security, addressId) VALUES "
       ++ "(1, 1100, TRUE, 3), "
       ++ "(2, 900, FALSE, 4), "
       ++ "(5, 1000, TRUE, 17);")
 
-  -- Вставка данных в таблицу flats (добавлены новые записи)
+  -- Вставка данных в таблицу commercialRealEstates (добавлены новые записи)
   execute_ sqlConnection (fromString $
-    "INSERT INTO flats (id, area, \"roomCount\", \"addressId\", floor, \"floorsCount\", \"balconyArea\") VALUES "
-      ++ "(1, 45, 2, 9, 6, 2, 10), "
-      ++ "(2, 34, 1, 10, 2, 1, 0), "
-      ++ "(6, 50, 3, 18, 4, 2, 15);")
+    "INSERT INTO commercialRealEstates (id, area, objectType, buildingType, addressId) VALUES "
+      ++ "(9, 5000, 1, 2, 19), "
+      ++ "(10, 6000, 2, 3, 20);")
 
   -- Вставка данных в таблицу wallets
   execute_ sqlConnection (fromString $
@@ -283,7 +283,7 @@ seedDB = do
 
   -- Вставка данных в таблицу ads с корректными objectType и описаниями
   execute_ sqlConnection (fromString $
-    "INSERT INTO ads (id, seller, \"objectId\", \"objectType\", cost, description) VALUES "
+    "INSERT INTO ads (id, seller, objectId, objectType, cost, description) VALUES "
       ++ "(1, 1, 1, 1, 10000, 'Продается уютная квартира в центре города.'), "
       ++ "(2, 2, 2, 1, 15000, 'Большая квартира с двумя балконами.'), "
       ++ "(3, 3, 3, 2, 20000, 'Современный дом с садом и гаражом.'), "
@@ -291,15 +291,17 @@ seedDB = do
       ++ "(5, 1, 5, 4, 30000, 'Гараж с автоматической дверью.'), "
       ++ "(6, 2, 6, 1, 12000, 'Квартира рядом с парком.'), "
       ++ "(7, 3, 7, 2, 18000, 'Дом с бассейном и сауной.'), "
-      ++ "(8, 4, 8, 3, 22000, 'Земельный участок в экологически чистом районе.');")
+      ++ "(8, 4, 8, 3, 22000, 'Земельный участок в экологически чистом районе.'), "
+      ++ "(9, 1, 9, 5, 35000, 'Коммерческая недвижимость в центре города.'), "
+      ++ "(10, 4, 10, 5, 40000, 'Офисное помещение с парковкой.');")
 
   -- Вставка данных в таблицу deals
   execute_ sqlConnection (fromString $
-    "INSERT INTO deals (id, buyer, \"adId\", \"dealType\", status, date, \"finalCost\") VALUES "
-      ++ "(1, 2, 5, 1, 'new', '2024-08-16T09:00:00.000Z', 10000), "
-      ++ "(2, 1, 6, 1, 'close', '2024-08-16T09:00:00.000Z', 20000), "
-      ++ "(3, 4, 7, 1, 'reject', '2024-08-16T09:00:00.000Z', 100000000), "
-      ++ "(4, 1, 8, 1, 'new', '2024-08-16T09:00:00.000Z', 17500000), "
-      ++ "(5, 1, 1, 1, 'close', '2024-08-16T09:00:00.000Z', 67000);")
+    "INSERT INTO deals (id, buyer, adId, dealType, status, date, finalCost) VALUES "
+      ++ "(1, 2, 5, '1', 'new', '2024-08-16', 10000), "
+      ++ "(2, 1, 6, '1', 'close', '2024-08-16', 20000), "
+      ++ "(3, 4, 7, '1', 'reject', '2024-08-16', 100000000), "
+      ++ "(4, 1, 8, '1', 'new', '2024-08-16', 17500000), "
+      ++ "(5, 1, 1, '1', 'close', '2024-08-16', 67000);")
 
   close sqlConnection
