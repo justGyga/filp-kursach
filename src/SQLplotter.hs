@@ -202,7 +202,7 @@ seedDB = do
   putStrLn "------------------------------------"
   putStrLn "------------------------------------"
 
-  -- Вставка данных в таблицу addresses
+  -- Вставка данных в таблицу addresses (добавлены новые адреса)
   execute_ sqlConnection (fromString $
     "INSERT INTO addresses (state, city, district, \"postalCode\", \"streetName\", \"houseNumber\", entrance, \"doorNumber\") VALUES "
       ++ "('Томская область', 'Томск', 'Кировский', '100001', 'Улица1', '12', 1, 101),"
@@ -224,37 +224,42 @@ seedDB = do
       ++ "('Томская область', 'Томск', 'Октябрьский', '100009', 'Улица9', '20', 5, 109),"
       ++ "('Томская область', 'Томск', 'Октябрьский', '100013', 'Улица13', '24', 7, 113),"
       ++ "('Томская область', 'Томск', 'Октябрьский', '100014', 'Улица14', '25', 7, 114),"
-      ++ "('Томская область', 'Томск', 'Октябрьский', '100015', 'Улица15', '26', 8, 115);")
+      ++ "('Томская область', 'Томск', 'Октябрьский', '100015', 'Улица15', '26', 8, 115),"
+      ++ "('Томская область', 'Томск', 'Советский', '100021', 'Улица21', '32', 11, 121),"
+      ++ "('Томская область', 'Томск', 'Советский', '100022', 'Улица22', '33', 12, 122);")
 
-  -- Вставка данных в таблицу commercialRealEstates
-  execute_ sqlConnection (fromString $
-    "INSERT INTO \"commercialRealEstates\" (id, area, \"objectType\", \"buildingType\", \"addressId\") VALUES"
-      ++ "(1, 1200, 1, 2, 1),"
-      ++ "(2, 2500, 2, 3, 2);")
+  -- Вставка данных в таблицу wallets, users, ads и deals остается без изменений
 
-  -- Вставка данных в таблицу garages
-  execute_ sqlConnection (fromString $
-    "INSERT INTO garages (id, area, security, \"addressId\") VALUES "
-      ++ "(1, 1100, TRUE, 3), "
-      ++ "(2, 900, FALSE, 4);")
-
-  -- Вставка данных в таблицу landPlot
-  execute_ sqlConnection (fromString $
-    "INSERT INTO \"landPlot\" (id, area, \"landCategory\", \"addressId\") VALUES "
-      ++ "(1, 3500, 1, 5), "
-      ++ "(2, 1900, 3, 6);")
-
-  -- Вставка данных в таблицу houses
+  -- Вставка данных в таблицу houses (добавлены новые записи)
   execute_ sqlConnection (fromString $
     "INSERT INTO houses (id, area, \"areType\", \"addressId\", \"roomCount\", \"floorsCount\", \"basementArea\") VALUES "
       ++ "(1, 1320, 2, 7, 6, 2, 0), "
-      ++ "(2, 1520, 1, 8, 2, 1, 0);")
+      ++ "(2, 1520, 1, 8, 2, 1, 0), "
+      ++ "(3, 1600, 1, 11, 4, 2, 500), "
+      ++ "(4, 1800, 2, 12, 5, 3, 600), "
+      ++ "(7, 2000, 1, 21, 3, 2, 400);")
 
-  -- Вставка данных в таблицу flats
+  -- Вставка данных в таблицу landPlot (добавлены новые записи)
+  execute_ sqlConnection (fromString $
+    "INSERT INTO \"landPlot\" (id, area, \"landCategory\", \"addressId\") VALUES "
+      ++ "(1, 3500, 1, 5), "
+      ++ "(2, 1900, 3, 6), "
+      ++ "(4, 4000, 2, 13), "
+      ++ "(8, 5000, 3, 14);")
+
+  -- Вставка данных в таблицу garages (добавлены новые записи)
+  execute_ sqlConnection (fromString $
+    "INSERT INTO garages (id, area, security, \"addressId\") VALUES "
+      ++ "(1, 1100, TRUE, 3), "
+      ++ "(2, 900, FALSE, 4), "
+      ++ "(5, 1000, TRUE, 17);")
+
+  -- Вставка данных в таблицу flats (добавлены новые записи)
   execute_ sqlConnection (fromString $
     "INSERT INTO flats (id, area, \"roomCount\", \"addressId\", floor, \"floorsCount\", \"balconyArea\") VALUES "
       ++ "(1, 45, 2, 9, 6, 2, 10), "
-      ++ "(2, 34, 1, 10, 2, 1, 0);")
+      ++ "(2, 34, 1, 10, 2, 1, 0), "
+      ++ "(6, 50, 3, 18, 4, 2, 15);")
 
   -- Вставка данных в таблицу wallets
   execute_ sqlConnection (fromString $
@@ -276,7 +281,7 @@ seedDB = do
       ++ "(5, 'Vladislav', 'Verkholansev', 'verxolancev@mail.ru', 'pass', 5), "
       ++ "(6, 'Daniil', 'Ivanichev', 'yaneidd@mail.ru', 'pass', 6);")
 
-  -- Вставка данных в таблицу ads с описаниями
+  -- Вставка данных в таблицу ads с корректными objectType и описаниями
   execute_ sqlConnection (fromString $
     "INSERT INTO ads (id, seller, \"objectId\", \"objectType\", cost, description) VALUES "
       ++ "(1, 1, 1, 1, 10000, 'Продается уютная квартира в центре города.'), "
