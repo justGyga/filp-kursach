@@ -1,20 +1,27 @@
-{-# LANGUAGE OverloadedStrings #-}
+-- {-# LANGUAGE OverloadedStrings #-}
+
+module Ads where
 
 import SQLplotter (getUserSession)
 import Database.SQLite.Simple
 
 
-data Address = Address {id: Integer}
+data Ad = Ad {id:: Integer, seller:: Integer, objectId:: Integer, objectType:: Integer, cost:: Float, description:: String}
+instance FromRow Ad where
+  fromRow = Ad <$> field <*> field <*>field <*> field <*> field <*> field <*> field
+instance ToRow Ad where
+  toRow(Ad id seller objectId objectType cost description) = toRow (id, seller, objectId, objectType, cost, description)
 
-getMyAddresses :: IO ()
-getMyAddresses = do
+getMyAds ::  IO ()
+getMyAds = do
   dataBase <- open "local.db"
   myId <- getUserSession
-  getAddressesByUser dataBase myId
+  getAdsByUser dataBase myId
   close dataBase
 
 
-getAddressesByUser :: Connection -> Integer -> IO ()
-getAddressesByUser db myId = do
-  addresses <- query db "SELECT * FROM ads WHERE seller = ?;" (Only id)
+getAdsByUser :: Connection -> Integer -> IO ()
+getAdsByUser db myId = do
+  addresses <- query db "SELECT * FROM ads WHERE seller = ?;" (id) :: IO [Ad]
+  print addresses
 
