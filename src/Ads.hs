@@ -188,18 +188,18 @@ printAdWithAddress (AdWithAddress ad addr) = do
   putStrLn $ "Стоимость:\t" ++ show (cost ad) ++ " RUB"
   putStrLn $ "Описание:\t" ++ description ad
   putStrLn "----- Адрес Объекта -----"
-  putStrLn $ "Регион:\t" ++ state addr
-  putStrLn $ "Город:\t" ++ city addr
-  putStrLn $ "Район:\t" ++ district addr
+  putStrLn $ "Регион:\t\t" ++ state addr
+  putStrLn $ "Город:\t\t" ++ city addr
+  putStrLn $ "Район:\t\t" ++ district addr
   putStrLn $ "Почтовый Код:\t" ++ postalCode addr
-  putStrLn $ "Улица:\t" ++ streetName addr
+  putStrLn $ "Улица:\t\t" ++ streetName addr
   putStrLn $ "Номер Дома:\t" ++ houseNumber addr
   case entrance addr of
-    Just ent -> putStrLn $ "Подъезд: " ++ show ent
-    Nothing  -> putStrLn "Подъезд: Не указано"
+    Just ent -> putStrLn $ "Подъезд:\t" ++ show ent
+    Nothing  -> putStrLn "Подъезд:\t\tНе указано"
   case doorNumber addr of
-    Just dn -> putStrLn $ "Номер Двери: " ++ show dn
-    Nothing -> putStrLn "Номер Двери: Не указан"
+    Just dn -> putStrLn $ "Номер Двери:\t" ++ show dn
+    Nothing -> putStrLn "Номер Двери:\t\tНе указан"
   putStrLn "-----------------------------------"
 
 -- | Функция для преобразования `objectType` в читаемый формат.
