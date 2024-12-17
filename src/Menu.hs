@@ -2,13 +2,12 @@
 
 module Menu where
 
-import           Ads           (viewAvailableAds, filterAvailableAds)
-import           Control.Monad (when)
-import           UserModule    (signIn, signUp)
+import Ads (filterAvailableAds)
+import UserModule (signIn, signUp)
 
 startMenu :: IO ()
 startMenu = do
-  putStrLn "Главное меню"
+  putStrLn "\nГлавное меню"
   putStrLn "1. Войти"
   putStrLn "2. Зарегистрироваться"
   putStrLn "3. Выход"
@@ -22,10 +21,12 @@ startMenu = do
         then afterAuth
         else startMenu
     "2" -> do
-      signUp
-      startMenu
+      success <- signUp
+      if success
+        then afterAuth
+        else startMenu
     "3" -> putStrLn "Выход..."
-    _   -> do
+    _ -> do
       putStrLn "Неверный выбор, попробуйте снова."
       startMenu
 
@@ -57,6 +58,6 @@ afterAuth = do
       putStrLn "Функциональность пока не реализована."
       afterAuth
     "5" -> putStrLn "Выход..."
-    _   -> do
+    _ -> do
       putStrLn "Неверный выбор, попробуйте снова."
       afterAuth

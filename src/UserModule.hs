@@ -23,11 +23,12 @@ signIn = do
   close dataBase
   return result
 
-signUp :: IO ()
+signUp :: IO Bool
 signUp = do
   dataBase <- open "local.db"
-  createAccount dataBase
+  result <- createAccount dataBase
   close dataBase
+  return result
 
 findAccount :: Connection -> IO Bool
 findAccount db = do
@@ -53,7 +54,7 @@ findAccount db = do
       addUserSession userId
       return True
 
-createAccount :: Connection -> IO ()
+createAccount :: Connection -> IO Bool
 createAccount db = do
   putStrLn "Введите вашу электронную почту:"
   email <- getLine
@@ -73,7 +74,7 @@ createAccount db = do
         "1" -> createAccount db
         _   -> do
           putStrLn "Выход..."
-          return ()
+          return False
     else do
       putStrLn "Введите ваше имя:"
       name <- getLine
@@ -91,4 +92,5 @@ createAccount db = do
       execute db "INSERT INTO users (id, name, surname, email, password, wallet) VALUES (?, ?, ?, ?, ?, ?);" (newId, name, surname, email, password, walletId)
       addUserSession newId
       putStrLn "Аккаунт успешно создан."
+      return True
 
