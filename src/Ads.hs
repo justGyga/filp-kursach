@@ -10,22 +10,17 @@ module Ads
   )
 where
 
-import Commons (clearCLI, getNumericInput)
-import Control.Monad (when)
-import Data.Int (Int64)
-import Data.Maybe (fromJust, isJust)
+import Commons (clearCLI)
+import Data.List (find)
 import Data.String (fromString)
-import Data.Text (Text, unpack)
+import Data.Text (Text)
 import Data.Text qualified as T
 import Database.SQLite.Simple
-import Database.SQLite.Simple.FromRow (RowParser)
-import Database.SQLite.Simple.ToField (toField)
 import SQLplotter (getUserSession)
-import Data.List (find)
 
 data RawAdData = RawAdData
   { rawAdId :: Integer,
-    rawObjectId :: Integer, 
+    rawObjectId :: Integer,
     rawObjectType :: Integer,
     rawSeller :: Integer,
     rawCost :: Float,
@@ -48,7 +43,7 @@ instance FromRow RawAdData where
     RawAdData
       <$> field -- id
       <*> field -- objectId
-      <*> field -- objectType  
+      <*> field -- objectType
       <*> field -- seller
       <*> field -- cost
       <*> field -- description
@@ -317,12 +312,9 @@ printAdWithAddress (AdWithAddress ad addr ot area) = do
 
 -- | Функция для преобразования `objectType` в читаемый формат.
 showObjectType :: Integer -> String
-showObjectType 1 = "Квартира"
-showObjectType 2 = "Дом"
-showObjectType 3 = "Земельный участок"
-showObjectType 4 = "Гараж"
-showObjectType 5 = "Коммерческая недвижимость"
-showObjectType _ = "Неизвестный тип объекта"
+showObjectType n = case lookup n allObjectTypes of
+  Just name -> name
+  Nothing -> "Неизвестный тип объекта"
 
 -- | Новая функция для фильтрации доступных объявлений
 filterAvailableAds :: IO ()
@@ -331,7 +323,6 @@ filterAvailableAds = do
 
   -- Получение доступных фильтров
   districts <- query_ dataBase "SELECT DISTINCT district FROM addresses;" :: IO [Only Text]
-  objectTypes <- query_ dataBase "SELECT DISTINCT objectType FROM ads;" :: IO [Only Integer]
 
   -- Сбор фильтров от пользователя
   putStrLn "\n----- Фильтрация Объявлений -----\n"
@@ -367,17 +358,16 @@ filterAvailableAds = do
   objectTypeFilter <- case objectTypeChoice of
     "1" -> do
       putStrLn "Доступные типы объектов:"
-      mapM_ (\(i, ot) -> putStrLn $ show i ++ ". " ++ showObjectType ot) (zip [1 ..] (map fromOnly objectTypes))
+      mapM_ (\(i, name) -> putStrLn $ show i ++ ". " ++ name) allObjectTypes
       putStrLn "Введите номер типа объекта:"
       idx <- getLine
-      case reads idx :: [(Int, String)] of
-        [(n, "")] -> do
-          let selected = lookup n (zip [1 ..] (map fromOnly objectTypes))
-          case selected of
-            Just ot -> return $ " AND objs.\"objectType\"=" ++ show ot
-            Nothing -> putStrLn "Неверный номер типа объекта." >> return ""
+      case reads idx :: [(Integer, String)] of
+        [(n, "")] ->
+          if n >= 1 && n <= 5
+            then return $ " AND ads.\"objectType\"=" ++ show n
+            else putStrLn "Неверный номер типа объекта." >> return ""
         _ -> do
-          putStrLn "Некорректный ввод. Пожалуйста, введите число."
+          putStrLn "Некорректный ввод. Пожалуйста, введите число от 1 до 5."
           return ""
     _ -> return ""
 
@@ -423,7 +413,7 @@ filterAvailableAds = do
       putStrLn "Введите минимальную площадь объекта:"
       input <- getLine
       case reads input :: [(Int, String)] of
-        [(area, "")] | area >= 0 -> return $ " AND objects.area >= " ++ show area
+        [(area, "")] | area >= 0 -> return $ " AND objs.area >= " ++ show area
         _ -> do
           putStrLn "Некорректное значение. Пожалуйста, введите положительное целое число."
           return ""
@@ -439,7 +429,7 @@ filterAvailableAds = do
       putStrLn "Введите максимальную площадь объекта:"
       input <- getLine
       case reads input :: [(Int, String)] of
-        [(area, "")] | area >= 0 -> return $ " AND objects.area <= " ++ show area
+        [(area, "")] | area >= 0 -> return $ " AND objs.area <= " ++ show area
         _ -> do
           putStrLn "Некорректное значение. Пожалуйста, введите положительное целое число."
           return ""
@@ -491,39 +481,49 @@ filterAvailableAds = do
   let conditions = districtFilter ++ objectTypeFilter ++ minCostFilter ++ maxCostFilter ++ minAreaFilter ++ maxAreaFilter
 
   -- Полный запрос
-  let finalQuery = baseQuery ++ conditions ++ " ORDER BY ads.id ASC;"
+  let finalQuery = baseQuery ++ conditions ++ " ORDER BY ads.id ASC"
 
-  -- Выполнение запроса с использованием RawAdData для отладки
-  -- Выполнение запроса
-  rawResults <- query_ dataBase (fromString finalQuery) :: IO [RawAdData]
+  [Only totalCount] <- query_ dataBase (fromString $ "SELECT COUNT(id) FROM (" ++ finalQuery ++ ") AS filteredAds") :: IO [Only Integer]
+  -- Выводим количество найденных записей
+  putStrLn $ "\nНайдено объявлений: " ++ show totalCount
 
-  -- Выводим сырые данные для проверки
-  putStrLn "\nПолученные данные:"
-  mapM_ print rawResults
-
-  -- Конвертируем сырые данные в AdWithAddress
-  let adsWithAddress = map convertRawToAdWithAddress rawResults
-
-  -- clearCLI -- Временно отключено для отладки
-  if null adsWithAddress
-    then putStrLn "Нет объявлений, соответствующих выбранным фильтрам."
-    else do
+  -- Если есть записи, выполняем основной запрос
+  if totalCount > 0
+    then do
+      -- Основной запрос остается без изменений
+      rawResults <- query_ dataBase (fromString finalQuery) :: IO [RawAdData]
+      let adsWithAddress = map convertRawToAdWithAddress rawResults
       putStrLn "\n----- Отфильтрованные Объявления -----\n"
       mapM_ printAdWithAddress adsWithAddress
 
-  putStrLn "\nВведите номер объявления для подробной информации или нажмите Enter для возврата:"
-  choice <- getLine
-  case reads choice :: [(Int, String)] of
-    [(n, "")] -> do
-      let selectedAd = find (\awa -> adId (ad awa) == fromIntegral n) adsWithAddress
-      case selectedAd of
-        Just ad -> do
-          clearCLI
-          printAdWithAddress ad
-          filterAvailableAds
-        Nothing -> do
-          putStrLn "Объявление не найдено"
-          filterAvailableAds
-    _ -> return ()
-
+      putStrLn "\nВведите номер объявления для подробной информации или нажмите Enter для возврата:"
+      choice <- getLine
+      case reads choice :: [(Int, String)] of
+        [(n, "")] -> do
+          let selectedAd = find (\awa -> adId (ad awa) == fromIntegral n) adsWithAddress
+          case selectedAd of
+            Just ad -> do
+              clearCLI
+              printAdWithAddress ad
+              filterAvailableAds
+            Nothing -> do
+              putStrLn "Объявление не найдено"
+              filterAvailableAds
+        _ -> return ()
+    else
+      putStrLn "Нет объявлений, соответствующих выбранным фильтрам."
   close dataBase
+
+-- Добавим новую структуру для типов объектов
+data ObjectType = Flat | House | LandPlot | Garage | Commercial
+  deriving (Show, Eq)
+
+-- Добавим список всех типов объектов
+allObjectTypes :: [(Integer, String)]
+allObjectTypes =
+  [ (1, "Квартира"),
+    (2, "Дом"),
+    (3, "Земельный участок"),
+    (4, "Гараж"),
+    (5, "Коммерческая недвижимость")
+  ]
