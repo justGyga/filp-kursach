@@ -3,11 +3,13 @@
 
 module CreateAd where
 
-import Commons (getFloat, getString)
+import Commons (getFloat, getString, clearCLI)
 import CreateAddress (findOrCreateAddress)
 import CreateFlat (createFlat)
 import CreateHouse (createHouse)
 import CreateLandPlot (createLandPlot)
+import CreateGarage (createGarage)
+import CreateCommercialRealEstate (createCommercialRealEstate)
 import Database.SQLite.Simple
 import SQLplotter (getLastId, getUserSession)
 
@@ -43,14 +45,20 @@ router dataBase = do
       addressId <- findOrCreateAddress dataBase
       objectId <- createLandPlot dataBase addressId
       createAdService dataBase 3 owner objectId
-    "4" -> putStrLn "Вы выбрали гараж"
-    "5" -> putStrLn "Вы выбрали коммерческую недвижимость"
+    "4" -> do
+      addressId <- findOrCreateAddress dataBase
+      objectId <- createGarage dataBase addressId
+      createAdService dataBase 4 owner objectId
+    "5" -> do
+      addressId <- findOrCreateAddress dataBase
+      objectId <- createCommercialRealEstate dataBase addressId
+      createAdService dataBase 5 owner objectId
     _ -> putStrLn "Неверный выбор, попробуйте снова."
 
 createAdService :: Connection -> Integer -> Integer -> Integer -> IO ()
 createAdService dataBase objectType ownerId objectId = do
-  cost <- getFloat "Введите стоимость квартиры (в рублях):"
-  description <- getString "Введите описание квартиры:" False
+  cost <- getFloat "Введите стоимость объекта (в рублях):"
+  description <- getString "Введите описание объекта:" False
 
   executeNamed
     dataBase
@@ -63,6 +71,8 @@ createAdService dataBase objectType ownerId objectId = do
     ]
 
   adId <- getLastId dataBase
+
+  clearCLI
 
   putStrLn "\nОбъявление о продаже квартиры успешно создано! ID объявления: "
   putStrLn $ show adId

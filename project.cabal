@@ -62,7 +62,7 @@ executable project
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules: SQLplotter, Menu, Commons, WalletModule, UserModule, Ads, GetProfile, GetDeals, GetOwnAds, CreateAd, CreateFlat, CreateHouse, Enums, CreateAddress, CreateLandPlot
+    other-modules: SQLplotter, Menu, Commons, WalletModule, UserModule, Ads, GetProfile, GetDeals, GetOwnAds, CreateAd, CreateFlat, CreateHouse, Enums, CreateAddress, CreateLandPlot, CreateGarage, CreateCommercialRealEstate
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

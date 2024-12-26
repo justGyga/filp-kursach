@@ -210,9 +210,8 @@ initializeDB = do
     ( fromString $
         "CREATE TABLE IF NOT EXISTS \"commercialRealEstates\" ("
           ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-          ++ "area INT,"
-          ++ "\"objectType\" INT,"
-          ++ "\"buildingType\" INT,"
+          ++ "area INTEGER,"
+          ++ "\"objectType\" INTEGER,"
           ++ "\"addressId\" INTEGER,"
           ++ "\"ot\" INTEGER DEFAULT 5, "
           ++ "FOREIGN KEY (\"addressId\") REFERENCES addresses(id)"

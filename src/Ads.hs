@@ -16,6 +16,7 @@ import Data.Text (Text)
 import Data.Text qualified as T
 import Database.SQLite.Simple
 import SQLplotter (getUserSession)
+import Enums (getAdObjectType)
 
 data RawAdData = RawAdData
   { rawAdId :: Integer,
@@ -335,18 +336,8 @@ filterAvailableAds = do
   objectTypeChoice <- getLine
   objectTypeFilter <- case objectTypeChoice of
     "1" -> do
-      putStrLn "Доступные типы объектов:"
-      mapM_ (\(i, name) -> putStrLn $ show i ++ ". " ++ name) allObjectTypes
-      putStrLn "Введите номер типа объекта:"
-      idx <- getLine
-      case reads idx :: [(Integer, String)] of
-        [(n, "")] ->
-          if n >= 1 && n <= 5
-            then return $ " AND ads.\"objectType\"=" ++ show n
-            else putStrLn "Неверный номер типа объекта." >> return ""
-        _ -> do
-          putStrLn "Некорректный ввод. Пожалуйста, введите число от 1 до 5."
-          return ""
+      idx <- getAdObjectType
+      return $ " AND ads.\"objectType\"=" ++ show idx
     _ -> return ""
 
   -- Фильтр по минимальной стоимости

@@ -35,3 +35,42 @@ getLandCategory = do
       putStrLn "Неверный выбор, попробуйте снова."
       getLandCategory
 
+getCommercialObjectType :: IO Integer
+getCommercialObjectType = do
+  putStrLn "--------- Выберите тип коммерческого объекта --------"
+  putStrLn "1. Торговое помещение"
+  putStrLn "2. Офисное помещение"
+  putStrLn "3. Склад"
+  putStrLn "4. Общественное здание"
+  putStrLn "5. Общепит"
+  putStrLn "Введите выбранный пункт меню:"
+  choice <- getLine
+  case choice of
+    "1" -> return 1
+    "2" -> return 2
+    "3" -> return 3
+    "4" -> return 4
+    "5" -> return 5
+    _ -> do
+      putStrLn "Неверный выбор, попробуйте снова."
+      getCommercialObjectType
+
+getAdObjectType :: IO Integer
+getAdObjectType = do
+  putStrLn "--------- Выберите тип объекта --------"
+  putStrLn "1. Квартира"
+  putStrLn "2. Дом"
+  putStrLn "3. Земельный участок"
+  putStrLn "4. Гараж"
+  putStrLn "5. Коммерческая недвижимость"
+  putStrLn "Введите выбранный пункт меню:"
+  choice <- getLine
+  case choice of
+    "1" -> return 1
+    "2" -> return 2
+    "3" -> return 3
+    "4" -> return 4
+    "5" -> return 5
+    _ -> do
+      putStrLn "Неверный выбор, попробуйте снова."
+      getAdObjectType

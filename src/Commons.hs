@@ -62,3 +62,10 @@ getString prompt allowEmpty = do
       putStrLn "Строка не может быть пустой. Попробуйте еще раз."
       getString prompt allowEmpty
     else return str
+
+getBoolean :: String -> IO Bool
+getBoolean prompt = do
+  putStrLn prompt
+  putStrLn "    y/Y - да, любое другое значение - нет"
+  input <- getLine
+  return (input == "y" || input == "Y")
