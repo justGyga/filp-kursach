@@ -5,13 +5,13 @@ module CreateHouse where
 
 import Commons (getInteger)
 import Database.SQLite.Simple
-import Enums (getAreaType)
+import Enums (getHouseAreaType)
 import SQLplotter (getLastId)
 
 createHouse :: Connection -> Integer -> IO Integer
 createHouse dataBase addressId = do
   area <- getInteger "Введите площадь дома (в кв.м.):" 1
-  areaType <- getAreaType
+  areaType <- getHouseAreaType
   roomCount <- getInteger "Введите количество комнат:" 1
   floorsCount <- getInteger "Введите количество этажей:" 1
   basementArea <- getInteger "Введите площадь подвала (в кв.м.):" 0

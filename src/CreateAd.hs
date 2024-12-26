@@ -7,6 +7,7 @@ import Commons (getFloat, getString)
 import CreateAddress (findOrCreateAddress)
 import CreateFlat (createFlat)
 import CreateHouse (createHouse)
+import CreateLandPlot (createLandPlot)
 import Database.SQLite.Simple
 import SQLplotter (getLastId, getUserSession)
 
@@ -38,7 +39,10 @@ router dataBase = do
       addressId <- findOrCreateAddress dataBase
       objectId <- createHouse dataBase addressId
       createAdService dataBase 2 owner objectId
-    "3" -> putStrLn "Вы выбрали земельный участок"
+    "3" -> do
+      addressId <- findOrCreateAddress dataBase
+      objectId <- createLandPlot dataBase addressId
+      createAdService dataBase 3 owner objectId
     "4" -> putStrLn "Вы выбрали гараж"
     "5" -> putStrLn "Вы выбрали коммерческую недвижимость"
     _ -> putStrLn "Неверный выбор, попробуйте снова."
