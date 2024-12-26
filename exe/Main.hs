@@ -2,8 +2,8 @@ module Main where
 
 import Commons (clearCLI)
 import Data.String (fromString)
-import Data.Text
-import Database.SQLite.Simple
+import Data.Text ( Text, unpack )
+import Database.SQLite.Simple ( close, open, query_ )
 import Menu (startMenu)
 import SQLplotter (addSessionTable, initializeDB, seedDB)
 
@@ -13,7 +13,7 @@ main = do
   seedDB
   addSessionTable
   clearCLI
-  listAllAdsWithDistricts
+  -- listAllAdsWithDistricts
   startMenu
 
 listAllAdsWithDistricts :: IO ()

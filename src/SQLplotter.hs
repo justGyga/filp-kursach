@@ -236,7 +236,7 @@ seedDB = do
   execute_
     sqlConnection
     ( fromString $
-        "INSERT INTO addresses (state, city, district, postalCode, streetName, houseNumber, entrance, doorNumber) VALUES "
+        "INSERT INTO addresses (state, city, district, \"postalCode\", \"streetName\", \"houseNumber\", entrance, \"doorNumber\") VALUES "
           ++ "('Томская область', 'Томск', 'Кировский', '100001', 'Нахимова', '12', 1, 101),"
           ++ "('Томская область', 'Томск', 'Кировский', '100002', 'Нахимова', '13', 1, 102),"
           ++ "('Томская область', 'Томск', 'Советский', '100010', 'Елизаровых', '21', 5, 110),"
@@ -267,11 +267,11 @@ seedDB = do
   execute_
     sqlConnection
     ( fromString $
-        "INSERT INTO flats (id, area, roomCount, addressId, floor, floorsCount, balconyArea) VALUES "
+        "INSERT INTO flats (id, area, \"roomCount\", \"addressId\", floor, \"floorsCount\", \"balconyArea\") VALUES "
           ++ "(1, 45, 2, 9, 6, 2, 10), "
           ++ "(2, 34, 1, 10, 2, 1, 0), "
-          ++ "(3, 60, 3, 1, 5, 10, 15), " -- Новая квартира в Kirovsky
-          ++ "(4, 55, 2, 2, 3, 5, 8), " -- Ещё одна квартира в Kirovsky
+          ++ "(3, 60, 3, 1, 5, 10, 15), "
+          ++ "(4, 55, 2, 2, 3, 5, 8), "
           ++ "(6, 50, 3, 18, 4, 2, 15);"
     )
 
@@ -279,7 +279,7 @@ seedDB = do
   execute_
     sqlConnection
     ( fromString $
-        "INSERT INTO houses (id, area, areType, addressId, roomCount, floorsCount, basementArea) VALUES "
+        "INSERT INTO houses (id, area, \"areType\", \"addressId\", \"roomCount\", \"floorsCount\", \"basementArea\") VALUES "
           ++ "(1, 1320, 2, 7, 6, 2, 0), "
           ++ "(2, 1520, 1, 8, 2, 1, 0), "
           ++ "(3, 1600, 1, 11, 4, 2, 500), "
@@ -291,7 +291,7 @@ seedDB = do
   execute_
     sqlConnection
     ( fromString $
-        "INSERT INTO landPlot (id, area, landCategory, addressId) VALUES "
+        "INSERT INTO landPlot (id, area, \"landCategory\", \"addressId\") VALUES "
           ++ "(1, 3500, 1, 5), "
           ++ "(2, 1900, 3, 6), "
           ++ "(4, 4000, 2, 13), "
@@ -302,7 +302,7 @@ seedDB = do
   execute_
     sqlConnection
     ( fromString $
-        "INSERT INTO garages (id, area, security, addressId) VALUES "
+        "INSERT INTO garages (id, area, security, \"addressId\") VALUES "
           ++ "(1, 1100, TRUE, 3), "
           ++ "(2, 900, FALSE, 4), "
           ++ "(5, 1000, TRUE, 17);"
@@ -312,7 +312,7 @@ seedDB = do
   execute_
     sqlConnection
     ( fromString $
-        "INSERT INTO commercialRealEstates (id, area, objectType, buildingType, addressId) VALUES "
+        "INSERT INTO commercialRealEstates (id, area, \"objectType\", \"buildingType\", \"addressId\") VALUES "
           ++ "(9, 5000, 1, 2, 19), "
           ++ "(10, 6000, 2, 3, 20);"
     )
@@ -347,7 +347,7 @@ seedDB = do
   execute_
     sqlConnection
     ( fromString $
-        "INSERT INTO ads (id, seller, objectId, objectType, cost, description) VALUES "
+        "INSERT INTO ads (id, seller, \"objectId\", \"objectType\", cost, description) VALUES "
           ++ "(1, 1, 1, 1, 10000, 'Продается уютная квартира в центре города.'), "
           ++ "(2, 2, 2, 1, 15000, 'Большая квартира с двумя балконами.'), "
           ++ "(3, 3, 3, 2, 20000, 'Современный дом с садом и гаражом.'), "
@@ -364,7 +364,7 @@ seedDB = do
   execute_
     sqlConnection
     ( fromString $
-        "INSERT INTO deals (id, buyer, adId, dealType, status, date, finalCost) VALUES "
+        "INSERT INTO deals (id, buyer, \"adId\", \"dealType\", status, date, \"finalCost\") VALUES "
           ++ "(1, 2, 5, '1', 'new', '2024-08-16', 10000), "
           ++ "(2, 1, 6, '1', 'close', '2024-08-16', 20000), "
           ++ "(3, 4, 7, '1', 'reject', '2024-08-16', 100000000), "
@@ -373,3 +373,8 @@ seedDB = do
     )
 
   close sqlConnection
+
+getLastId :: Connection -> IO Integer
+getLastId conn = do
+  [Only lastId] <- query_ conn "SELECT last_insert_rowid();" :: IO [Only Integer]
+  return lastId

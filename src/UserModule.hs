@@ -1,11 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module UserModule where
 
-import           Database.SQLite.Simple
-import           Prelude                hiding (id)
-import           SQLplotter             (addUserSession)
-import           WalletModule
+import Database.SQLite.Simple
+import SQLplotter (addUserSession)
+import WalletModule
+import Prelude hiding (id)
 
 data User = User {id :: Int, name :: String, surname :: String, email :: String, password :: String, wallet :: Int} deriving (Show)
 
@@ -45,7 +46,7 @@ findAccount db = do
       choice <- getLine
       case choice of
         "1" -> findAccount db
-        _   -> do
+        _ -> do
           putStrLn "Выход..."
           return False
     else do
@@ -72,7 +73,7 @@ createAccount db = do
       choice <- getLine
       case choice of
         "1" -> createAccount db
-        _   -> do
+        _ -> do
           putStrLn "Выход..."
           return False
     else do
@@ -82,9 +83,10 @@ createAccount db = do
       surname <- getLine
 
       ids <- query_ db "SELECT id FROM users ORDER BY id DESC LIMIT 1;" :: IO [Only Integer]
-      let newId  = if null ids
-            then 1
-            else let Only lastId = head ids in lastId + 1
+      let newId =
+            if null ids
+              then 1
+              else let Only lastId = head ids in lastId + 1
 
       -- putStrLn ("Ваш id: "++show newId)
       walletId <- createWallet db
@@ -93,4 +95,3 @@ createAccount db = do
       addUserSession newId
       putStrLn "Аккаунт успешно создан."
       return True
-

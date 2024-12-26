@@ -1,9 +1,14 @@
--- src/Menu.hs
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module Menu where
 
 import Ads (filterAvailableAds)
+import Commons (clearCLI)
+import GetOwnAds (getOwnAds)
+import GetProfile (getProfile)
 import UserModule (signIn, signUp)
+import CreateAd (createAd)
 
 startMenu :: IO ()
 startMenu = do
@@ -43,19 +48,20 @@ afterAuth = do
   choice <- getLine
   case choice of
     "1" -> do
+      clearCLI
       filterAvailableAds
       afterAuth
     "2" -> do
-      -- Здесь можно добавить вызов функции для создания объявления
-      putStrLn "Функциональность пока не реализована."
+      clearCLI
+      createAd
       afterAuth
     "3" -> do
-      -- Здесь можно добавить вызов функции для просмотра аккаунта
-      putStrLn "Функциональность пока не реализована."
+      clearCLI
+      getProfile
       afterAuth
     "4" -> do
-      -- Здесь можно добавить вызов функции для просмотра своих объявлений
-      putStrLn "Функциональность пока не реализована."
+      clearCLI
+      getOwnAds
       afterAuth
     "5" -> putStrLn "Выход..."
     _ -> do
