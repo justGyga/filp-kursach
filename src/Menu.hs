@@ -3,7 +3,7 @@
 
 module Menu where
 
-import Ads (filterAvailableAds)
+import GetAdsList (filterAvailableAds)
 import Commons (clearCLI)
 import GetOwnAds (getOwnAds)
 import GetProfile (getProfile)

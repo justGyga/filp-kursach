@@ -13,5 +13,5 @@ createCommercialRealEstate dataBase addressId = do
   area <- getInteger "Введите площадь коммерческой недвижимости (в кв.м.):" 1
   objectType <- getCommercialObjectType
 
-  execute dataBase "INSERT INTO commercialRealEstates (area, \"objectType\", \"addressId\") VALUES (?, ?, ?)" (area, objectType, addressId)
+  execute dataBase "INSERT INTO \"commercialRealEstates\" (area, \"objectType\", \"addressId\") VALUES (?, ?, ?)" (area, objectType, addressId)
   getLastId dataBase

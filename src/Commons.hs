@@ -7,7 +7,6 @@ clearCLI = do
   _ <- system "cls"
   putStrLn ""
 
--- Вспомогательная функция для повторного запроса числового значения
 getNumericInput :: (Read a, Ord a, Num a) => String -> (a -> Bool) -> IO (Maybe a)
 getNumericInput prompt validator = do
   putStrLn prompt
@@ -35,7 +34,7 @@ getInteger prompt minValue = do
           putStrLn $ "Пожалуйста, введите число больше или равное " ++ show minValue
           getInteger prompt minValue
     _ -> do
-      putStrLn "Пожалуйста, введите корректное целое число"
+      putStrLn "Введенное значение не является числом. Пожалуйста, введите корректное целое число"
       getInteger prompt minValue
 
 getFloat :: String -> IO Float
@@ -69,3 +68,23 @@ getBoolean prompt = do
   putStrLn "    y/Y - да, любое другое значение - нет"
   input <- getLine
   return (input == "y" || input == "Y")
+
+getEmail :: String -> IO String
+getEmail prompt = do
+  putStrLn prompt
+  input <- getLine
+  if isValidEmail input
+    then return input
+    else do
+      putStrLn "Некорректный email адрес. Пожалуйста, введите корректный email."
+      getEmail prompt
+
+isValidEmail :: String -> Bool
+isValidEmail email = 
+  let hasAt = '@' `elem` email
+      parts = words [if c == '@' then ' ' else c | c <- email]
+      validChars = all (\c -> c `elem` (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ ".-_@")) email
+      hasLocalPart = not (null (head parts))
+      hasDomain = length parts == 2 && not (null (last parts)) && '.' `elem` last parts
+  in hasAt && validChars && hasLocalPart && hasDomain
+  

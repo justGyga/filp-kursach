@@ -64,7 +64,6 @@ initializeDB = do
   putStrLn "------------------------------------"
   putStrLn "------------------------------------"
 
-  -- Создание таблиц (адреса, wallets, users, ads, meetings, deals, flats, houses, landPlot, garages, commercialRealEstates)
   execute_
     sqlConnection
     ( fromString $
@@ -307,13 +306,12 @@ seedDB = do
           ++ "(5, 1000, TRUE, 17);"
     )
 
-  -- Вставка данных в таблицу commercialRealEstates (добавлены новые записи)
   execute_
     sqlConnection
     ( fromString $
-        "INSERT INTO commercialRealEstates (id, area, \"objectType\", \"buildingType\", \"addressId\") VALUES "
-          ++ "(9, 5000, 1, 2, 19), "
-          ++ "(10, 6000, 2, 3, 20);"
+        "INSERT INTO \"commercialRealEstates\" (id, area, \"objectType\",  \"addressId\") VALUES "
+          ++ "(9, 5000, 1, 19), "
+          ++ "(10, 6000, 2, 20);"
     )
 
   -- Вставка данных в таблицу wallets

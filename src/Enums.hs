@@ -55,22 +55,12 @@ getCommercialObjectType = do
       putStrLn "Неверный выбор, попробуйте снова."
       getCommercialObjectType
 
-getAdObjectType :: IO Integer
-getAdObjectType = do
-  putStrLn "--------- Выберите тип объекта --------"
-  putStrLn "1. Квартира"
-  putStrLn "2. Дом"
-  putStrLn "3. Земельный участок"
-  putStrLn "4. Гараж"
-  putStrLn "5. Коммерческая недвижимость"
-  putStrLn "Введите выбранный пункт меню:"
-  choice <- getLine
-  case choice of
-    "1" -> return 1
-    "2" -> return 2
-    "3" -> return 3
-    "4" -> return 4
-    "5" -> return 5
-    _ -> do
-      putStrLn "Неверный выбор, попробуйте снова."
-      getAdObjectType
+allAdObjectTypes :: [(Integer, String)]
+allAdObjectTypes =
+  [ (1, "Квартира"),
+    (2, "Дом"),
+    (3, "Земельный участок"),
+    (4, "Гараж"),
+    (5, "Коммерческая недвижимость")
+  ]
+

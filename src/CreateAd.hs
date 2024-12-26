@@ -29,6 +29,7 @@ router dataBase = do
   putStrLn "3. Земельный участок"
   putStrLn "4. Гараж"
   putStrLn "5. Коммерческая недвижимость"
+  putStrLn "6. Выйти"
   putStrLn "Введите выбранный пункт меню:"
 
   choice <- getLine
@@ -53,6 +54,7 @@ router dataBase = do
       addressId <- findOrCreateAddress dataBase
       objectId <- createCommercialRealEstate dataBase addressId
       createAdService dataBase 5 owner objectId
+    "6" -> putStrLn "Возвращение в главное меню..."
     _ -> putStrLn "Неверный выбор, попробуйте снова."
 
 createAdService :: Connection -> Integer -> Integer -> Integer -> IO ()

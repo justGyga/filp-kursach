@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Ads
+module GetAdsList
   ( Ad (..),
     Address (..),
     AdWithAddress (..),
@@ -15,8 +15,9 @@ import Data.String (fromString)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Database.SQLite.Simple
+import Enums (allAdObjectTypes)
+import Filters (districtFilter, maxAreaFilter, maxCostFilter, minAreaFilter, minimalCostFilter, objectTypeFilter)
 import SQLplotter (getUserSession)
-import Enums (getAdObjectType)
 
 data RawAdData = RawAdData
   { rawAdId :: Integer,
@@ -291,7 +292,7 @@ printAdWithAddress (AdWithAddress ad addr ot area) = do
 
 -- | Функция для преобразования `objectType` в читаемый формат.
 showObjectType :: Integer -> String
-showObjectType n = case lookup n allObjectTypes of
+showObjectType n = case lookup n allAdObjectTypes of
   Just name -> name
   Nothing -> "Неизвестный тип объекта"
 
@@ -305,104 +306,14 @@ filterAvailableAds = do
 
   -- Сбор фильтров от пользователя
   putStrLn "\n----- Фильтрация Объявлений -----\n"
-  putStrLn "\n----- Район -----\n"
 
-  -- Фильтр по району
-  putStrLn "1. Выбрать район"
-  putStrLn "_. Пропустить"
-  districtChoice <- getLine
-  districtFilter <- case districtChoice of
-    "1" -> do
-      putStrLn "Доступные районы:"
-      mapM_ (\(i, d) -> putStrLn $ show i ++ ". " ++ T.unpack d) (zip [1 ..] (map fromOnly districts))
-      putStrLn "Введите номер района:"
-      idx <- getLine
-      case reads idx :: [(Int, String)] of
-        [(n, "")] -> do
-          -- Успешное преобразование в число
-          let selected = lookup n (zip [1 ..] (map fromOnly districts))
-          case selected of
-            Just d -> return $ " AND addresses.district='" ++ T.unpack d ++ "'"
-            Nothing -> putStrLn "Неверный номер района." >> return ""
-        _ -> do
-          -- Ошибка преобразования
-          putStrLn "Некорректный ввод. Пожалуйста, введите число."
-          return ""
-    _ -> return ""
-
-  putStrLn "\n----- Тип объекта -----\n"
-  putStrLn "1. Выбрать тип объекта"
-  putStrLn "_. Пропустить"
-  objectTypeChoice <- getLine
-  objectTypeFilter <- case objectTypeChoice of
-    "1" -> do
-      idx <- getAdObjectType
-      return $ " AND ads.\"objectType\"=" ++ show idx
-    _ -> return ""
-
-  -- Фильтр по минимальной стоимости
-  putStrLn "\n----- Минимальная стоимость -----\n"
-  putStrLn "1. Ввести значение"
-  putStrLn "_. Пропустить"
-  minCostChoice <- getLine
-  minCostFilter <- case minCostChoice of
-    "1" -> do
-      putStrLn "Введите минимальную стоимость:"
-      input <- getLine
-      case reads input :: [(Float, String)] of
-        [(cost, "")] | cost >= 0 -> return $ " AND ads.cost >= " ++ show cost
-        _ -> do
-          putStrLn "Некорректное значение. Пожалуйста, введите положительное число."
-          return ""
-    _ -> return ""
-
-  -- Фильтр по максимальной стоимости
-  putStrLn "\n----- Максимальная стоимость -----\n"
-  putStrLn "1. Ввести значение"
-  putStrLn "_. Пропустить"
-  maxCostChoice <- getLine
-  maxCostFilter <- case maxCostChoice of
-    "1" -> do
-      putStrLn "Введите максимальную стоимость:"
-      input <- getLine
-      case reads input :: [(Float, String)] of
-        [(cost, "")] | cost >= 0 -> return $ " AND ads.cost <= " ++ show cost
-        _ -> do
-          putStrLn "Некорректное значение. Пожалуйста, введите положительное число."
-          return ""
-    _ -> return ""
-
-  -- Фильтр по минимальной площади
-  putStrLn "\n----- Минимальная площадь объекта -----\n"
-  putStrLn "1. Ввести значение"
-  putStrLn "_. Пропустить"
-  minAreaChoice <- getLine
-  minAreaFilter <- case minAreaChoice of
-    "1" -> do
-      putStrLn "Введите минимальную площадь объекта:"
-      input <- getLine
-      case reads input :: [(Int, String)] of
-        [(area, "")] | area >= 0 -> return $ " AND objs.area >= " ++ show area
-        _ -> do
-          putStrLn "Некорректное значение. Пожалуйста, введите положительное целое число."
-          return ""
-    _ -> return ""
-
-  -- Фильтр по максимальной площади
-  putStrLn "\n----- Максимальная площадь объекта -----\n"
-  putStrLn "1. Ввести значение"
-  putStrLn "_. Пропустить"
-  maxAreaChoice <- getLine
-  maxAreaFilter <- case maxAreaChoice of
-    "1" -> do
-      putStrLn "Введите максимальную площадь объекта:"
-      input <- getLine
-      case reads input :: [(Int, String)] of
-        [(area, "")] | area >= 0 -> return $ " AND objs.area <= " ++ show area
-        _ -> do
-          putStrLn "Некорректное значение. Пожалуйста, введите положительное целое число."
-          return ""
-    _ -> return ""
+  districtFilterQuery <- districtFilter dataBase
+  objectTypeFilterQuery <- objectTypeFilter
+  minimalCostFilterQuery <- minimalCostFilter
+  maxCostFilterQuery <- maxCostFilter
+  minAreaFilterQuery <- minAreaFilter
+  maxAreaFilterQuery <- maxAreaFilter
+  clearCLI
 
   currentUserId <- getUserSession
   let sellerFilter = "ads.seller != " ++ show currentUserId
@@ -447,7 +358,7 @@ filterAvailableAds = do
           ++ sellerFilter -- Начало условий WHERE
 
   -- Построение условий WHERE и списка параметров
-  let conditions = districtFilter ++ objectTypeFilter ++ minCostFilter ++ maxCostFilter ++ minAreaFilter ++ maxAreaFilter
+  let conditions = districtFilterQuery ++ objectTypeFilterQuery ++ minimalCostFilterQuery ++ maxCostFilterQuery ++ minAreaFilterQuery ++ maxAreaFilterQuery
 
   -- Полный запрос
   let finalQuery = baseQuery ++ conditions ++ " ORDER BY ads.id ASC"
@@ -482,17 +393,3 @@ filterAvailableAds = do
     else
       putStrLn "Нет объявлений, соответствующих выбранным фильтрам."
   close dataBase
-
--- Добавим новую структуру для типов объектов
-data ObjectType = Flat | House | LandPlot | Garage | Commercial
-  deriving (Show, Eq)
-
--- Добавим список всех типов объектов
-allObjectTypes :: [(Integer, String)]
-allObjectTypes =
-  [ (1, "Квартира"),
-    (2, "Дом"),
-    (3, "Земельный участок"),
-    (4, "Гараж"),
-    (5, "Коммерческая недвижимость")
-  ]

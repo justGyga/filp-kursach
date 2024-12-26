@@ -7,6 +7,7 @@ import Database.SQLite.Simple
 import SQLplotter (addUserSession)
 import WalletModule
 import Prelude hiding (id)
+import Commons (getEmail, getString)
 
 data User = User {id :: Int, name :: String, surname :: String, email :: String, password :: String, wallet :: Int} deriving (Show)
 
@@ -33,10 +34,8 @@ signUp = do
 
 findAccount :: Connection -> IO Bool
 findAccount db = do
-  putStrLn "Введите вашу электронную почту:"
-  email <- getLine
-  putStrLn "Введите ваш пароль:"
-  password <- getLine
+  email <- getEmail "Введите вашу электронную почту:"
+  password <- getString "Введите ваш пароль:" False
   users <- query db "SELECT id FROM users WHERE email = ? AND password = ? LIMIT 1;" (email, password) :: IO [Only Integer]
   if null users
     then do
@@ -57,12 +56,9 @@ findAccount db = do
 
 createAccount :: Connection -> IO Bool
 createAccount db = do
-  putStrLn "Введите вашу электронную почту:"
-  email <- getLine
-  putStrLn "Введите ваш пароль:"
-  password <- getLine
-  putStrLn "Повторите ваш пароль:"
-  verifyPassword <- getLine
+  email <- getEmail "Введите вашу электронную почту:"
+  password <- getString "Введите ваш пароль:" False
+  verifyPassword <- getString "Повторите ваш пароль:" False
 
   let isPasswordVerified = password == verifyPassword
   if not isPasswordVerified
@@ -77,10 +73,8 @@ createAccount db = do
           putStrLn "Выход..."
           return False
     else do
-      putStrLn "Введите ваше имя:"
-      name <- getLine
-      putStrLn "Введите вашу фамилию:"
-      surname <- getLine
+      name <- getString "Введите ваше имя:" False
+      surname <- getString "Введите вашу фамилию:" False
 
       ids <- query_ db "SELECT id FROM users ORDER BY id DESC LIMIT 1;" :: IO [Only Integer]
       let newId =

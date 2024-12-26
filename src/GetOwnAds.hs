@@ -11,6 +11,7 @@ import Database.SQLite.Simple
     query,
   )
 import SQLplotter (getUserSession)
+import Enums (allAdObjectTypes)
 
 data RawAdData = RawAdData
   { rawAdId :: Integer,
@@ -131,16 +132,6 @@ printAdWithAddress ad = do
   putStrLn "-----------------------------------"
 
 showObjectType :: Integer -> String
-showObjectType n = case lookup n allObjectTypes of
+showObjectType n = case lookup n allAdObjectTypes of
   Just name -> name
   Nothing -> "Неизвестный тип объекта"
-
--- Добавим список всех типов объектов
-allObjectTypes :: [(Integer, String)]
-allObjectTypes =
-  [ (1, "Квартира"),
-    (2, "Дом"),
-    (3, "Земельный участок"),
-    (4, "Гараж"),
-    (5, "Коммерческая недвижимость")
-  ]
