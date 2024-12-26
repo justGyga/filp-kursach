@@ -2,14 +2,6 @@ module GetOwnAds where
 
 import Data.String (fromString)
 import Database.SQLite.Simple
-  ( Connection,
-    FromRow (..),
-    Only (Only),
-    close,
-    field,
-    open,
-    query,
-  )
 import Enums (allAdObjectTypes)
 import SQLplotter (getUserSession)
 import DataTypes (RawAdData(..), rawAdId, rawObjectId, rawObjectType, rawSeller, rawCost, rawDescription, 

@@ -13,14 +13,30 @@ import Commons (clearCLI)
 import Data.List (find)
 import Data.String (fromString)
 import Data.Text (Text)
-import Data.Text qualified as T
+import DataTypes
+  ( RawAdData (..),
+    rawAdId,
+    rawAddressId,
+    rawCity,
+    rawCost,
+    rawDescription,
+    rawDistrict,
+    rawDoorNumber,
+    rawEntrance,
+    rawHouseNumber,
+    rawObjectArea,
+    rawObjectId,
+    rawObjectType,
+    rawPostalCode,
+    rawSeller,
+    rawState,
+    rawStreetName,
+  )
 import Database.SQLite.Simple
 import Enums (allAdObjectTypes)
 import Filters (districtFilter, maxAreaFilter, maxCostFilter, minAreaFilter, minimalCostFilter, objectTypeFilter)
+import GetAdById (getAdById)
 import SQLplotter (getUserSession)
-import DataTypes (RawAdData(..), rawAdId, rawObjectId, rawObjectType, rawSeller, rawCost, rawDescription, 
-                 rawAddressId, rawState, rawCity, rawDistrict, rawPostalCode, rawStreetName, 
-                 rawHouseNumber, rawEntrance, rawDoorNumber, rawObjectArea)
 
 data Address = Address
   { addressId :: Integer,
@@ -231,27 +247,27 @@ defaultAddress =
 -- | Вспомогательная функция для форматирования и вывода объявления вместе с адресом и площадью.
 printAdWithAddress :: AdWithAddress -> IO ()
 printAdWithAddress (AdWithAddress ad addr ot area) = do
-  putStrLn $ "ID Объявления:\t" ++ show (adId ad)
-  putStrLn $ "ID Продавца:\t" ++ show (seller ad)
-  putStrLn $ "Тип Объекта:\t" ++ showObjectType ot
-  putStrLn $ "ID Объекта:\t" ++ show (objectId ad)
-  putStrLn $ "Стоимость:\t" ++ show (cost ad) ++ " RUB"
-  putStrLn $ "Описание:\t" ++ description ad
-  putStrLn "----- Адрес Объекта -----"
-  putStrLn $ "Регион:\t\t" ++ state addr
-  putStrLn $ "Город:\t\t" ++ city addr
-  putStrLn $ "Район:\t\t" ++ district addr
-  putStrLn $ "Почтовый Код:\t" ++ postalCode addr
-  putStrLn $ "Улица:\t\t" ++ streetName addr
-  putStrLn $ "Номер Дома:\t" ++ houseNumber addr
+  putStrLn $ "+- ID Объявления:\t" ++ show (adId ad)
+  putStrLn $ "|  ID Продавца:\t" ++ show (seller ad)
+  putStrLn $ "|  Тип Объекта:\t" ++ showObjectType ot
+  putStrLn $ "|  ID Объекта:\t" ++ show (objectId ad)
+  putStrLn $ "|  Стоимость:\t" ++ show (cost ad) ++ " RUB"
+  putStrLn $ "|  Описание:\t" ++ description ad
+  putStrLn "+- Адрес Объекта -----"
+  putStrLn $ "|  Регион:\t\t" ++ state addr
+  putStrLn $ "|  Город:\t\t" ++ city addr
+  putStrLn $ "|  Район:\t\t" ++ district addr
+  putStrLn $ "|  Почтовый Код:\t" ++ postalCode addr
+  putStrLn $ "|  Улица:\t\t" ++ streetName addr
+  putStrLn $ "|  Номер Дома:\t" ++ houseNumber addr
   case entrance addr of
-    Just ent -> putStrLn $ "Подъезд:\t" ++ show ent
-    Nothing -> putStrLn "Подъезд:\t\tНе указано"
+    Just ent -> putStrLn $ "|  Подъезд:\t" ++ show ent
+    Nothing -> putStrLn $ "|  Подъезд:\t\tНе указано"
   case doorNumber addr of
-    Just dn -> putStrLn $ "Номер Двери:\t" ++ show dn
-    Nothing -> putStrLn "Номер Двери:\t\tНе указан"
-  putStrLn $ "Площадь:\t" ++ show area ++ " кв.м."
-  putStrLn "-----------------------------------"
+    Just dn -> putStrLn $ "|  Номер Двери:\t" ++ show dn
+    Nothing -> putStrLn $ "|  Номер Двери:\t\tНе указан"
+  putStrLn $ "|  Площадь:\t" ++ show area ++ " кв.м."
+  putStrLn "+--------------------------------"
 
 -- | Функция для преобразования `objectType` в читаемый формат.
 showObjectType :: Integer -> String
@@ -263,9 +279,6 @@ showObjectType n = case lookup n allAdObjectTypes of
 filterAvailableAds :: IO ()
 filterAvailableAds = do
   dataBase <- open "local.db"
-
-  -- Получение доступных фильтров
-  districts <- query_ dataBase "SELECT DISTINCT district FROM addresses;" :: IO [Only Text]
 
   -- Сбор фильтров от пользователя
   putStrLn "\n----- Фильтрация Объявлений -----\n"
@@ -345,10 +358,9 @@ filterAvailableAds = do
         [(n, "")] -> do
           let selectedAd = find (\awa -> adId (ad awa) == fromIntegral n) adsWithAddress
           case selectedAd of
-            Just ad -> do
+            Just adWithAddr -> do
               clearCLI
-              printAdWithAddress ad
-              filterAvailableAds
+              getAdById dataBase (adId (ad adWithAddr))
             Nothing -> do
               putStrLn "Объявление не найдено"
               filterAvailableAds
