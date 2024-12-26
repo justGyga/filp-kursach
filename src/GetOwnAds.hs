@@ -2,7 +2,14 @@ module GetOwnAds where
 
 import Data.String (fromString)
 import Database.SQLite.Simple
-    ( Connection, Only(Only), close, open, query, field, FromRow(..) )
+  ( Connection,
+    FromRow (..),
+    Only (Only),
+    close,
+    field,
+    open,
+    query,
+  )
 import SQLplotter (getUserSession)
 
 data RawAdData = RawAdData
@@ -46,59 +53,59 @@ instance FromRow RawAdData where
 getOwnAds :: IO ()
 getOwnAds = do
   dataBase <- open "local.db"
-  id <- getUserSession
-  if id == -1
+  selfId <- getUserSession
+  if selfId == -1
     then putStrLn "Пользователь не авторизован"
     else do
-      getOwnAdsService dataBase id
+      getOwnAdsService dataBase selfId
   close dataBase
 
 getOwnAdsService :: Connection -> Integer -> IO ()
-getOwnAdsService dataBase id = do
-  let baseQuery = fromString $
-        "SELECT "
-          ++ "ads.id, "
-          ++ "ads.\"objectId\", "
-          ++ "ads.\"objectType\", "
-          ++ "ads.cost, "
-          ++ "ads.description, "
-          ++ "addresses.id AS addressId, "
-          ++ "addresses.state, "
-          ++ "addresses.city, "
-          ++ "addresses.district, "
-          ++ "addresses.\"postalCode\", "
-          ++ "addresses.\"streetName\", "
-          ++ "addresses.\"houseNumber\", "
-          ++ "CAST(NULLIF(addresses.entrance, '') AS INTEGER) AS entrance, "
-          ++ "CAST(NULLIF(addresses.\"doorNumber\", '') AS INTEGER) AS doorNumber, "
-          ++ "COALESCE(CAST(objs.area AS INTEGER), 0) AS objectArea "
-          ++ "FROM ads "
-          ++ "INNER JOIN ( "
-          ++ "  SELECT id, area, \"addressId\", ot "
-          ++ "  FROM flats "
-          ++ "  UNION "
-          ++ "  SELECT id, area, \"addressId\", ot "
-          ++ "  FROM houses "
-          ++ "  UNION "
-          ++ "  SELECT id, area, \"addressId\", ot "
-          ++ "  FROM \"landPlot\" "
-          ++ "  UNION "
-          ++ "  SELECT id, area, \"addressId\", ot "
-          ++ "  FROM garages "
-          ++ "  UNION "
-          ++ "  SELECT id, area, \"addressId\", ot "
-          ++ "  FROM \"commercialRealEstates\" "
-          ++ ") AS objs ON ads.\"objectId\" = objs.id AND ads.\"objectType\" = objs.ot "
-          ++ "JOIN addresses ON objs.\"addressId\" = addresses.id "
-          ++ "WHERE seller = ? ORDER BY ads.id ASC"
+getOwnAdsService dataBase selfId = do
+  let baseQuery =
+        fromString $
+          "SELECT "
+            ++ "ads.id, "
+            ++ "ads.\"objectId\", "
+            ++ "ads.\"objectType\", "
+            ++ "ads.cost, "
+            ++ "ads.description, "
+            ++ "addresses.id AS addressId, "
+            ++ "addresses.state, "
+            ++ "addresses.city, "
+            ++ "addresses.district, "
+            ++ "addresses.\"postalCode\", "
+            ++ "addresses.\"streetName\", "
+            ++ "addresses.\"houseNumber\", "
+            ++ "CAST(NULLIF(addresses.entrance, '') AS INTEGER) AS entrance, "
+            ++ "CAST(NULLIF(addresses.\"doorNumber\", '') AS INTEGER) AS doorNumber, "
+            ++ "COALESCE(CAST(objs.area AS INTEGER), 0) AS objectArea "
+            ++ "FROM ads "
+            ++ "INNER JOIN ( "
+            ++ "  SELECT id, area, \"addressId\", ot "
+            ++ "  FROM flats "
+            ++ "  UNION "
+            ++ "  SELECT id, area, \"addressId\", ot "
+            ++ "  FROM houses "
+            ++ "  UNION "
+            ++ "  SELECT id, area, \"addressId\", ot "
+            ++ "  FROM \"landPlot\" "
+            ++ "  UNION "
+            ++ "  SELECT id, area, \"addressId\", ot "
+            ++ "  FROM garages "
+            ++ "  UNION "
+            ++ "  SELECT id, area, \"addressId\", ot "
+            ++ "  FROM \"commercialRealEstates\" "
+            ++ ") AS objs ON ads.\"objectId\" = objs.id AND ads.\"objectType\" = objs.ot "
+            ++ "JOIN addresses ON objs.\"addressId\" = addresses.id "
+            ++ "WHERE seller = ? ORDER BY ads.id ASC"
 
-  ads <- query dataBase baseQuery (Only id) :: IO [RawAdData]
+  ads <- query dataBase baseQuery (Only selfId) :: IO [RawAdData]
   if null ads
     then putStrLn "У вас нет активных объявлений."
     else do
       putStrLn "\n----- Ваши Объявления -----\n"
       mapM_ printAdWithAddress ads
-      putStrLn "\n----------------------------\n"
 
 printAdWithAddress :: RawAdData -> IO ()
 printAdWithAddress ad = do

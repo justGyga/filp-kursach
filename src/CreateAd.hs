@@ -3,21 +3,23 @@
 
 module CreateAd where
 
+import Commons (getFloat, getString)
+import CreateAddress (findOrCreateAddress)
 import CreateFlat (createFlat)
-import SQLplotter (getLastId, getUserSession)
+import CreateHouse (createHouse)
 import Database.SQLite.Simple
+import SQLplotter (getLastId, getUserSession)
 
 createAd :: IO ()
 createAd = do
   dataBase <- open "local.db"
-  id <- findOrCreateAddress dataBase
-  router dataBase id
+  router dataBase
   close dataBase
 
-router :: Connection -> Integer -> IO ()
-router dataBase address = do
+router :: Connection -> IO ()
+router dataBase = do
   owner <- getUserSession
-  putStrLn "Создание объявления"
+  putStrLn "--------- Создание объявления --------"
   putStrLn "Выберите тип объекта:"
   putStrLn "1. Квартира"
   putStrLn "2. Дом"
@@ -28,48 +30,35 @@ router dataBase address = do
 
   choice <- getLine
   case choice of
-    "1" -> createFlat dataBase owner address
-    "2" -> putStrLn "Вы выбрали дом"
+    "1" -> do
+      addressId <- findOrCreateAddress dataBase
+      objectId <- createFlat dataBase addressId
+      createAdService dataBase 1 owner objectId
+    "2" -> do
+      addressId <- findOrCreateAddress dataBase
+      objectId <- createHouse dataBase addressId
+      createAdService dataBase 2 owner objectId
     "3" -> putStrLn "Вы выбрали земельный участок"
     "4" -> putStrLn "Вы выбрали гараж"
     "5" -> putStrLn "Вы выбрали коммерческую недвижимость"
     _ -> putStrLn "Неверный выбор, попробуйте снова."
 
-findOrCreateAddress :: Connection -> IO Integer
-findOrCreateAddress dataBase = do
-  putStrLn "--------- Добавим адрес --------"
-  state <- getString "Введите регион:"
-  city <- getString "Введите город:"
-  district <- getString "Введите район:"
-  postalCode <- getString "Введите почтовый индекс:"
-  streetName <- getString "Введите улицу:"
-  houseNumber <- getString "Введите номер дома:"
-  entranceStr <- getString "Введите подъезд (оставьте пустым если нет):"
-  let entrance = if null entranceStr then Nothing else Just (read entranceStr :: Integer)
-  putStrLn "Номер квартиры (оставьте пустым если нет):"
-  doorNumberStr <- getLine
-  let doorNumber = if null doorNumberStr then Nothing else Just (read doorNumberStr :: Integer)
+createAdService :: Connection -> Integer -> Integer -> Integer -> IO ()
+createAdService dataBase objectType ownerId objectId = do
+  cost <- getFloat "Введите стоимость квартиры (в рублях):"
+  description <- getString "Введите описание квартиры:" False
 
-  addresses <-
-    queryNamed
-      dataBase
-      "SELECT id FROM addresses WHERE state = :state AND city = :city AND district = :district AND postalCode = :postalCode AND streetName = :streetName AND houseNumber = :houseNumber AND entrance = :entrance AND doorNumber = :doorNumber"
-      [ ":state" := state,
-        ":city" := city,
-        ":district" := district,
-        ":postalCode" := postalCode,
-        ":streetName" := streetName,
-        ":houseNumber" := houseNumber,
-        ":entrance" := entrance,
-        ":doorNumber" := doorNumber
-      ] ::
-      IO [Only Integer]
+  executeNamed
+    dataBase
+    "INSERT INTO ads (seller, \"objectId\", \"objectType\", cost, description) VALUES (:seller, :objectId, :objectType, :cost, :description)"
+    [ ":seller" := (ownerId :: Integer),
+      ":objectId" := (objectId :: Integer),
+      ":objectType" := (objectType :: Integer),
+      ":cost" := (cost :: Float),
+      ":description" := (description :: String)
+    ]
 
-  case addresses of
-    [Only existingId] -> return existingId
-    _ -> do
-      execute
-        dataBase
-        "INSERT INTO addresses (state, city, district, postalCode, streetName, houseNumber, entrance, doorNumber) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-        (state, city, district, postalCode, streetName, houseNumber, entrance, doorNumber)
-      getLastId dataBase
+  adId <- getLastId dataBase
+
+  putStrLn "\nОбъявление о продаже квартиры успешно создано! ID объявления: "
+  putStrLn $ show adId

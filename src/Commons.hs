@@ -23,20 +23,20 @@ getNumericInput prompt validator = do
         then getNumericInput prompt validator
         else return Nothing
 
-getInteger :: String -> IO Integer
-getInteger prompt = do
+getInteger :: String -> Integer -> IO Integer
+getInteger prompt minValue = do
   putStrLn prompt
   input <- getLine
   case reads input of
     [(n, "")] ->
-      if n > 0
+      if n >= minValue
         then return n
         else do
-          putStrLn "Пожалуйста, введите положительное число"
-          getInteger prompt
+          putStrLn $ "Пожалуйста, введите число больше или равное " ++ show minValue
+          getInteger prompt minValue
     _ -> do
       putStrLn "Пожалуйста, введите корректное целое число"
-      getInteger prompt
+      getInteger prompt minValue
 
 getFloat :: String -> IO Float
 getFloat prompt = do
@@ -53,12 +53,12 @@ getFloat prompt = do
       putStrLn "Пожалуйста, введите корректное число"
       getFloat prompt
 
-getString :: String -> IO String
-getString prompt = do
+getString :: String -> Bool -> IO String
+getString prompt allowEmpty = do
   putStrLn prompt
   str <- getLine
-  if null str
+  if null str && not allowEmpty
     then do
       putStrLn "Строка не может быть пустой. Попробуйте еще раз."
-      getString prompt
+      getString prompt allowEmpty
     else return str

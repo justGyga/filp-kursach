@@ -168,12 +168,12 @@ initializeDB = do
     ( fromString $
         "CREATE TABLE IF NOT EXISTS houses ("
           ++ "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-          ++ "area INT,"
-          ++ "\"areType\" INT,"
+          ++ "area INTEGER,"
+          ++ "\"areaType\" INTEGER,"
           ++ "\"addressId\" INTEGER,"
-          ++ "\"roomCount\" INT,"
-          ++ "\"floorsCount\" INT,"
-          ++ "\"basementArea\" INT,"
+          ++ "\"roomCount\" INTEGER,"
+          ++ "\"floorsCount\" INTEGER,"
+          ++ "\"basementArea\" INTEGER,"
           ++ "\"ot\" INTEGER DEFAULT 2, "
           ++ "FOREIGN KEY (\"addressId\") REFERENCES addresses(id)"
           ++ ");"
@@ -279,7 +279,7 @@ seedDB = do
   execute_
     sqlConnection
     ( fromString $
-        "INSERT INTO houses (id, area, \"areType\", \"addressId\", \"roomCount\", \"floorsCount\", \"basementArea\") VALUES "
+        "INSERT INTO houses (id, area, \"areaType\", \"addressId\", \"roomCount\", \"floorsCount\", \"basementArea\") VALUES "
           ++ "(1, 1320, 2, 7, 6, 2, 0), "
           ++ "(2, 1520, 1, 8, 2, 1, 0), "
           ++ "(3, 1600, 1, 11, 4, 2, 500), "

@@ -4,7 +4,6 @@ module Ads
   ( Ad (..),
     Address (..),
     AdWithAddress (..),
-    getMyAds,
     viewAvailableAds,
     filterAvailableAds,
   )
@@ -169,16 +168,6 @@ convertRawToAdWithAddress raw =
           }
    in AdWithAddress ad address (rawObjectType raw) (rawObjectArea raw)
 
-getMyAds :: IO ()
-getMyAds = do
-  dataBase <- open "local.db"
-  myId <- getUserSession
-  ads <- query dataBase "SELECT * FROM ads WHERE seller = ?;" (Only myId) :: IO [Ad]
-  if null ads
-    then putStrLn "У вас нет активных объявлений."
-    else mapM_ printAd ads
-  close dataBase
-
 -- | Функция для просмотра всех доступных объявлений с их адресами.
 viewAvailableAds :: IO ()
 viewAvailableAds = do
@@ -273,17 +262,6 @@ defaultAddress =
       entrance = Nothing,
       doorNumber = Nothing
     }
-
--- | Вспомогательная функция для форматирования и вывода объявления без адреса.
-printAd :: Ad -> IO ()
-printAd ad = do
-  putStrLn $ "ID Объявления:\t" ++ show (adId ad)
-  putStrLn $ "ID Продавца:\t" ++ show (seller ad)
-  putStrLn $ "Тип Объекта:\t" ++ showObjectType (objectType ad)
-  putStrLn $ "ID Объекта:\t" ++ show (objectId ad)
-  putStrLn $ "Стоимость:\t" ++ show (cost ad) ++ " RUB"
-  putStrLn $ "Описание:\t" ++ description ad
-  putStrLn "-----------------------------------"
 
 -- | Вспомогательная функция для форматирования и вывода объявления вместе с адресом и площадью.
 printAdWithAddress :: AdWithAddress -> IO ()

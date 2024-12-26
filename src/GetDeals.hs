@@ -10,7 +10,7 @@ data Deal = Deal {id :: Integer, buyer :: Integer, adId :: Integer, status :: St
 instance FromRow Deal where
   fromRow = Deal <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 getDeals :: Connection -> Integer -> IO ()
-getDeals db id = do
+getDeals db selfId = do
   let dealsQuery = Query $ mconcat
         [ "SELECT deals.id, buyer, \"adId\", status, date, \"finalCost\", seller, description, name, surname "
         , "FROM deals "
@@ -19,7 +19,7 @@ getDeals db id = do
         , "WHERE seller = ? OR buyer = ? "
         , "ORDER BY date"
         ]
-  deals <- query db dealsQuery (id, id) :: IO [Deal]
+  deals <- query db dealsQuery (selfId, selfId) :: IO [Deal]
   case deals of
     [] -> putStrLn "Нет сделок"
     _ -> do
