@@ -24,6 +24,7 @@ getOwnAdsService dataBase selfId = do
         fromString $
           "SELECT "
             ++ "ads.id, "
+            ++ "ads.seller, "
             ++ "ads.\"objectId\", "
             ++ "ads.\"objectType\", "
             ++ "ads.cost, "
