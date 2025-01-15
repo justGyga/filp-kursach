@@ -43,13 +43,16 @@ objectTypeFilter = do
   case objectTypeChoice of
     "1" -> do
       putStrLn "Доступные типы объектов:"
-      mapM_ (\(i, t) -> putStrLn $ show i ++ ". " ++ show t) (zip [1..] allAdObjectTypes)
+      mapM_ (\(i, t) -> putStrLn $ show i ++ ". " ++ t) allAdObjectTypes
       n <- getNumericInput "Выберите номер типа:" (\x -> x > 0 && x <= fromIntegral (length allAdObjectTypes))
       case n of
         Just n -> do
-          let selected = lookup n (zip [1..] allAdObjectTypes)
+          putStrLn $ "Выбран тип: " ++ case lookup n allAdObjectTypes of 
+            Just name -> name
+            Nothing -> "Неизвестный тип объекта"
+          let selected = lookup n allAdObjectTypes
           case selected of
-            Just t -> return $ " AND ads.\"objectType\"='" ++ show t ++ "'"
+            Just t -> return $ " AND ads.\"objectType\"=" ++ show n
             Nothing -> putStrLn "Неверный номер типа." >> return ""
         Nothing -> do
           putStrLn "Некорректный ввод. Пожалуйста, введите число."

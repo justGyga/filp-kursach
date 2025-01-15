@@ -249,7 +249,7 @@ printAdWithAddress :: AdWithAddress -> IO ()
 printAdWithAddress (AdWithAddress ad addr ot area) = do
   putStrLn $ "+- ID Объявления:\t" ++ show (adId ad)
   putStrLn $ "|  ID Продавца:\t" ++ show (seller ad)
-  putStrLn $ "|  Тип Объекта:\t" ++ showObjectType ot
+  putStrLn $ "|  Тип Объекта:\t" ++ showObjectType (objectType ad)
   putStrLn $ "|  ID Объекта:\t" ++ show (objectId ad)
   putStrLn $ "|  Стоимость:\t" ++ show (cost ad) ++ " RUB"
   putStrLn $ "|  Описание:\t" ++ description ad
@@ -269,7 +269,6 @@ printAdWithAddress (AdWithAddress ad addr ot area) = do
   putStrLn $ "|  Площадь:\t" ++ show area ++ " кв.м."
   putStrLn "+--------------------------------"
 
--- | Функция для преобразования `objectType` в читаемый формат.
 showObjectType :: Integer -> String
 showObjectType n = case lookup n allAdObjectTypes of
   Just name -> name
@@ -297,9 +296,9 @@ filterAvailableAds = do
   let baseQuery =
         "SELECT "
           ++ "ads.id, "
+          ++ "ads.seller, "
           ++ "ads.\"objectId\", "
           ++ "ads.\"objectType\", "
-          ++ "ads.seller, "
           ++ "ads.cost, "
           ++ "ads.description, "
           ++ "addresses.id AS addressId, "
