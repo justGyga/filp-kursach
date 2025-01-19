@@ -5,14 +5,6 @@ module GetProfile where
 
 import Data.String (fromString)
 import Database.SQLite.Simple
-  ( Connection,
-    FromRow (..),
-    Only (Only),
-    close,
-    field,
-    open,
-    query,
-  )
 import SQLplotter (getUserSession)
 
 data SimpleUser = SimpleUser {

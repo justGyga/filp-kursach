@@ -1,22 +1,4 @@
-module DataTypes
-  ( RawAdData(..),
-    rawAdId,
-    rawObjectId,
-    rawObjectType,
-    rawSeller,
-    rawCost,
-    rawDescription,
-    rawAddressId,
-    rawState,
-    rawCity,
-    rawDistrict,
-    rawPostalCode,
-    rawStreetName,
-    rawHouseNumber,
-    rawEntrance,
-    rawDoorNumber,
-    rawObjectArea
-  ) where
+module DataTypes where
 
 import Database.SQLite.Simple
 

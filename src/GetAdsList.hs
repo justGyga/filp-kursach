@@ -1,37 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module GetAdsList
-  ( Ad (..),
-    Address (..),
-    AdWithAddress (..),
-    viewAvailableAds,
-    filterAvailableAds,
-  )
-where
+module GetAdsList where
 
 import Commons (clearCLI)
 import Data.List (find)
 import Data.String (fromString)
-import Data.Text (Text)
 import DataTypes
-  ( RawAdData (..),
-    rawAdId,
-    rawAddressId,
-    rawCity,
-    rawCost,
-    rawDescription,
-    rawDistrict,
-    rawDoorNumber,
-    rawEntrance,
-    rawHouseNumber,
-    rawObjectArea,
-    rawObjectId,
-    rawObjectType,
-    rawPostalCode,
-    rawSeller,
-    rawState,
-    rawStreetName,
-  )
 import Database.SQLite.Simple
 import Enums (allAdObjectTypes)
 import Filters (districtFilter, maxAreaFilter, maxCostFilter, minAreaFilter, minimalCostFilter, objectTypeFilter)

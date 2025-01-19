@@ -1,12 +1,15 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 module GetOwnAds where
 
 import Data.String (fromString)
 import Database.SQLite.Simple
 import Enums (allAdObjectTypes)
 import SQLplotter (getUserSession)
-import DataTypes (RawAdData(..), rawAdId, rawObjectId, rawObjectType, rawSeller, rawCost, rawDescription, 
-                 rawAddressId, rawState, rawCity, rawDistrict, rawPostalCode, rawStreetName, 
-                 rawHouseNumber, rawEntrance, rawDoorNumber, rawObjectArea)
+import DataTypes
+import GetAdById (getAdById)
+import DeleteAd
+import EditAd
 
 getOwnAds :: IO ()
 getOwnAds = do
@@ -15,10 +18,48 @@ getOwnAds = do
   if selfId == -1
     then putStrLn "Пользователь не авторизован"
     else do
-      getOwnAdsService dataBase selfId
+      ids <- getOwnAdsService dataBase selfId
+      choice <- selectAdId ids
+      case choice of
+        Just adId -> do
+          getAdById dataBase adId
+          putStrLn "----- Выберите действие -----"
+          putStrLn "1) Отредактировать объявление"
+          putStrLn "2) Удалить объявление"
+          putStrLn "Покинуть"
+          
+          action <- getLine
+          case action of
+            "1" -> do
+              editAd dataBase adId
+            "2" -> do
+              deleteAd dataBase adId
+            _ -> do
+              putStrLn "Функционал не реализован"
+        Nothing -> return ()
+      return ()
   close dataBase
 
-getOwnAdsService :: Connection -> Integer -> IO ()
+
+selectAdId :: [Integer] -> IO (Maybe Integer)
+selectAdId [] = return Nothing
+selectAdId ids = do
+  putStrLn "\nВыберите номер объявления или введите 'q' для выхода:"
+  input <- getLine
+  case input of
+    "q" -> return Nothing 
+    _ -> case reads input of
+          [(n, "")] -> if n `elem` ids
+                        then return $ Just n
+                        else do
+                          putStrLn "Неверный номер объявления. Попробуйте снова."
+                          selectAdId ids
+          _ -> do
+            putStrLn "Неверный ввод. Попробуйте снова."
+            selectAdId ids
+
+
+getOwnAdsService :: Connection -> Integer -> IO [Integer]
 getOwnAdsService dataBase selfId = do
   let baseQuery =
         fromString $
@@ -61,10 +102,13 @@ getOwnAdsService dataBase selfId = do
 
   ads <- query dataBase baseQuery (Only selfId) :: IO [RawAdData]
   if null ads
-    then putStrLn "У вас нет активных объявлений."
+    then do
+      putStrLn "У вас нет активных объявлений."
+      return []
     else do
       putStrLn "\n----- Ваши Объявления -----\n"
       mapM_ printAdWithAddress ads
+      return $ map rawObjectId ads
 
 printAdWithAddress :: RawAdData -> IO ()
 printAdWithAddress ad = do

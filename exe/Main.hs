@@ -6,8 +6,8 @@ import SQLplotter (addSessionTable, initializeDB, seedDB)
 
 main :: IO ()
 main = do
-  -- initializeDB
-  -- seedDB
+  initializeDB
+  seedDB
   addSessionTable
   clearCLI
   startMenu
