@@ -3,9 +3,9 @@
 
 module CreateAddress where
 
-import Commons (getString)
-import Database.SQLite.Simple
-import SQLplotter (getLastId)
+import           Commons                (getString)
+import           Database.SQLite.Simple
+import           SQLplotter             (getLastId)
 
 findOrCreateAddress :: Connection -> IO Integer
 findOrCreateAddress dataBase = do

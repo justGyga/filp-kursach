@@ -3,9 +3,9 @@
 
 module CreateFlat where
 
-import Commons (getInteger)
-import Database.SQLite.Simple
-import SQLplotter (getLastId)
+import           Commons                (getInteger)
+import           Database.SQLite.Simple
+import           SQLplotter             (getLastId)
 
 createFlat :: Connection -> Integer -> IO Integer
 createFlat dataBase addressId = do

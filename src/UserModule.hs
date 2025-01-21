@@ -3,11 +3,11 @@
 
 module UserModule where
 
-import Database.SQLite.Simple
-import SQLplotter (addUserSession)
-import WalletModule
-import Prelude hiding (id)
-import Commons (getEmail, getString)
+import           Commons                (getEmail, getString)
+import           Database.SQLite.Simple
+import           Prelude                hiding (id)
+import           SQLplotter             (addUserSession)
+import           WalletModule
 
 data User = User {id :: Int, name :: String, surname :: String, email :: String, password :: String, wallet :: Int} deriving (Show)
 

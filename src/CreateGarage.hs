@@ -3,9 +3,9 @@
 
 module CreateGarage where
 
-import Commons (getInteger, getBoolean)
-import Database.SQLite.Simple
-import SQLplotter (getLastId)
+import           Commons                (getBoolean, getInteger)
+import           Database.SQLite.Simple
+import           SQLplotter             (getLastId)
 
 createGarage :: Connection -> Integer -> IO Integer
 createGarage dataBase addressId = do

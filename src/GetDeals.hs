@@ -2,8 +2,8 @@
 
 module GetDeals where
 
-import Database.SQLite.Simple
-    ( Connection, query, field, FromRow(..), Query(Query) )
+import           Database.SQLite.Simple (Connection, FromRow (..),
+                                         Query (Query), field, query)
 
 data Deal = Deal {id :: Integer, buyer :: Integer, adId :: Integer, status :: String, date :: String, finalCost :: Float, seller :: Integer, description :: String, name :: String, surname :: String} deriving (Show)
 

@@ -4,9 +4,9 @@
 {-# HLINT ignore "Use when" #-}
 module SQLplotter where
 
-import Data.String (fromString)
-import Database.SQLite.Simple
-import System.Directory (doesFileExist, removeFile)
+import           Data.String            (fromString)
+import           Database.SQLite.Simple
+import           System.Directory       (doesFileExist, removeFile)
 
 -- Функция для добавления таблицы сессий
 addSessionTable :: IO ()
@@ -41,7 +41,7 @@ getUserSession = do
   close sqlConnection
   case result of
     [Only userId] -> return userId
-    _ -> return (-1)
+    _             -> return (-1)
 
 -- Функция инициализации базы данных
 initializeDB :: IO ()

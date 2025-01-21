@@ -3,15 +3,15 @@
 
 module GetProfile where
 
-import Data.String (fromString)
-import Database.SQLite.Simple
-import SQLplotter (getUserSession)
+import           Data.String            (fromString)
+import           Database.SQLite.Simple
+import           SQLplotter             (getUserSession)
 
 data SimpleUser = SimpleUser {
-  userId :: Integer,
-  userName :: String, 
+  userId      :: Integer,
+  userName    :: String,
   userSurname :: String,
-  userEmail :: String,
+  userEmail   :: String,
   userBalance :: Float
 } deriving (Show)
 

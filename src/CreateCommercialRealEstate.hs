@@ -3,10 +3,10 @@
 
 module CreateCommercialRealEstate where
 
-import Commons (getInteger)
-import Database.SQLite.Simple
-import Enums (getCommercialObjectType)
-import SQLplotter (getLastId)
+import           Commons                (getInteger)
+import           Database.SQLite.Simple
+import           Enums                  (getCommercialObjectType)
+import           SQLplotter             (getLastId)
 
 createCommercialRealEstate :: Connection -> Integer -> IO Integer
 createCommercialRealEstate dataBase addressId = do

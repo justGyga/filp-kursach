@@ -69,7 +69,7 @@ executable project
                 Enums, CreateAddress, CreateLandPlot,
                 CreateGarage, CreateCommercialRealEstate,
                 Filters, DataTypes, GetAdById, EditAd,
-                DeleteAd
+                DeleteAd, GetOwnDeals
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

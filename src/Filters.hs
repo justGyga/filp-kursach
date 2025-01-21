@@ -3,11 +3,11 @@
 
 module Filters where
 
-import Commons (getNumericInput)
-import Data.Text (Text)
-import qualified Data.Text as T
-import Database.SQLite.Simple
-import Enums (allAdObjectTypes)
+import           Commons                (getNumericInput)
+import           Data.Text              (Text)
+import qualified Data.Text              as T
+import           Database.SQLite.Simple
+import           Enums                  (allAdObjectTypes)
 
 districtFilter :: Connection -> IO String
 districtFilter dataBase = do
@@ -27,7 +27,7 @@ districtFilter dataBase = do
         Just n -> do
           let selected = lookup n (zip [1 ..] (map fromOnly districts))
           case selected of
-            Just d -> return $ " AND addresses.district='" ++ T.unpack d ++ "'"
+            Just d  -> return $ " AND addresses.district='" ++ T.unpack d ++ "'"
             Nothing -> putStrLn "Неверный номер района." >> return ""
         Nothing -> do
           putStrLn "Некорректный ввод. Пожалуйста, введите число."
@@ -47,12 +47,12 @@ objectTypeFilter = do
       n <- getNumericInput "Выберите номер типа:" (\x -> x > 0 && x <= fromIntegral (length allAdObjectTypes))
       case n of
         Just n -> do
-          putStrLn $ "Выбран тип: " ++ case lookup n allAdObjectTypes of 
+          putStrLn $ "Выбран тип: " ++ case lookup n allAdObjectTypes of
             Just name -> name
-            Nothing -> "Неизвестный тип объекта"
+            Nothing   -> "Неизвестный тип объекта"
           let selected = lookup n allAdObjectTypes
           case selected of
-            Just t -> return $ " AND ads.\"objectType\"=" ++ show n
+            Just t  -> return $ " AND ads.\"objectType\"=" ++ show n
             Nothing -> putStrLn "Неверный номер типа." >> return ""
         Nothing -> do
           putStrLn "Некорректный ввод. Пожалуйста, введите число."
@@ -93,7 +93,7 @@ dealTypeFilter = do
         _ -> do
           putStrLn "Некорректное значение. Пожалуйста, введите положительное число."
           return ""
-      
+
     _ -> return ""
 
 maxCostFilter :: IO String

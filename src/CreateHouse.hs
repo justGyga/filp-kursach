@@ -3,10 +3,10 @@
 
 module CreateHouse where
 
-import Commons (getInteger)
-import Database.SQLite.Simple
-import Enums (getHouseAreaType)
-import SQLplotter (getLastId)
+import           Commons                (getInteger)
+import           Database.SQLite.Simple
+import           Enums                  (getHouseAreaType)
+import           SQLplotter             (getLastId)
 
 createHouse :: Connection -> Integer -> IO Integer
 createHouse dataBase addressId = do

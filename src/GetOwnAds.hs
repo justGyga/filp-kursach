@@ -2,14 +2,14 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 module GetOwnAds where
 
-import Data.String (fromString)
-import Database.SQLite.Simple
-import Enums (allAdObjectTypes)
-import SQLplotter (getUserSession)
-import DataTypes
-import GetAdById (getAdById)
-import DeleteAd
-import EditAd
+import           Data.String            (fromString)
+import           Database.SQLite.Simple
+import           DataTypes
+import           DeleteAd
+import           EditAd
+import           Enums                  (allAdObjectTypes)
+import           GetAdById              (getAdById)
+import           SQLplotter             (getUserSession)
 
 getOwnAds :: IO ()
 getOwnAds = do
@@ -27,7 +27,7 @@ getOwnAds = do
           putStrLn "1) Отредактировать объявление"
           putStrLn "2) Удалить объявление"
           putStrLn "Покинуть"
-          
+
           action <- getLine
           case action of
             "1" -> do
@@ -47,7 +47,7 @@ selectAdId ids = do
   putStrLn "\nВыберите номер объявления или введите 'q' для выхода:"
   input <- getLine
   case input of
-    "q" -> return Nothing 
+    "q" -> return Nothing
     _ -> case reads input of
           [(n, "")] -> if n `elem` ids
                         then return $ Just n
@@ -127,7 +127,7 @@ printAdWithAddress ad = do
   putStrLn $ "Номер Дома:\t" ++ rawHouseNumber ad
   case rawEntrance ad of
     Just ent -> putStrLn $ "Подъезд:\t" ++ show ent
-    Nothing -> putStrLn "Подъезд:\t\tНе указано"
+    Nothing  -> putStrLn "Подъезд:\t\tНе указано"
   case rawDoorNumber ad of
     Just dn -> putStrLn $ "Номер Двери:\t" ++ show dn
     Nothing -> putStrLn "Номер Двери:\t\tНе указан"
@@ -137,4 +137,4 @@ printAdWithAddress ad = do
 showObjectType :: Integer -> String
 showObjectType n = case lookup n allAdObjectTypes of
   Just name -> name
-  Nothing -> "Неизвестный тип объекта"
+  Nothing   -> "Неизвестный тип объекта"

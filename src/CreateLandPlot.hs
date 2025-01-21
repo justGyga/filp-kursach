@@ -3,10 +3,10 @@
 
 module CreateLandPlot where
 
-import Commons (getInteger)
-import Database.SQLite.Simple
-import Enums (getLandCategory)
-import SQLplotter (getLastId)
+import           Commons                (getInteger)
+import           Database.SQLite.Simple
+import           Enums                  (getLandCategory)
+import           SQLplotter             (getLastId)
 
 createLandPlot :: Connection -> Integer -> IO Integer
 createLandPlot dataBase addressId = do

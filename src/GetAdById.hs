@@ -3,16 +3,16 @@
 
 module GetAdById where
 
-import Data.String (fromString)
-import Database.SQLite.Simple
+import           Data.String            (fromString)
+import           Database.SQLite.Simple
 
 data Ad = Ad
-  { adId :: Integer,
-    adObjectId :: Integer,
-    adObjectType :: Integer,
-    adCost :: Float,
-    adDescription :: String,
-    adSellerName :: String,
+  { adId            :: Integer,
+    adObjectId      :: Integer,
+    adObjectType    :: Integer,
+    adCost          :: Float,
+    adDescription   :: String,
+    adSellerName    :: String,
     adSellerSurname :: String
   }
   deriving (Show)
@@ -21,14 +21,14 @@ instance FromRow Ad where
   fromRow = Ad <$> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 data Flat = Flat
-  { flatId :: Integer,
-    flatArea :: Integer,
-    flatRooms :: Integer,
-    flatFloor :: Integer,
+  { flatId          :: Integer,
+    flatArea        :: Integer,
+    flatRooms       :: Integer,
+    flatFloor       :: Integer,
     flatFloorsCount :: Integer,
     flatBalconyArea :: Integer,
-    flatAddressId :: Integer,
-    flatOt :: Integer
+    flatAddressId   :: Integer,
+    flatOt          :: Integer
   }
   deriving (Show)
 
@@ -36,14 +36,14 @@ instance FromRow Flat where
   fromRow = Flat <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 data House = House
-  { houseId :: Integer,
-    houseAreaType :: Integer,
-    houseArea :: Integer,
-    houseRooms :: Integer,
-    houseFloor :: Integer,
-    houseAddressId :: Integer,
+  { houseId           :: Integer,
+    houseAreaType     :: Integer,
+    houseArea         :: Integer,
+    houseRooms        :: Integer,
+    houseFloor        :: Integer,
+    houseAddressId    :: Integer,
     houseBasementArea :: Integer,
-    houseOt :: Integer
+    houseOt           :: Integer
   }
   deriving (Show)
 
@@ -51,11 +51,11 @@ instance FromRow House where
   fromRow = House <$> field <*> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 data LandPlot = LandPlot
-  { landPlotId :: Integer,
-    landPlotArea :: Integer,
-    landPlotCategory :: Integer,
+  { landPlotId        :: Integer,
+    landPlotArea      :: Integer,
+    landPlotCategory  :: Integer,
     landPlotAddressId :: Integer,
-    landPlotOt :: Integer
+    landPlotOt        :: Integer
   }
   deriving (Show)
 
@@ -63,11 +63,11 @@ instance FromRow LandPlot where
   fromRow = LandPlot <$> field <*> field <*> field <*> field <*> field
 
 data Garage = Garage
-  { garageId :: Integer,
-    garageArea :: Integer,
-    garageSecurity :: Bool,
+  { garageId        :: Integer,
+    garageArea      :: Integer,
+    garageSecurity  :: Bool,
     garageAddressId :: Integer,
-    garageOt :: Integer
+    garageOt        :: Integer
   }
   deriving (Show)
 
@@ -75,11 +75,11 @@ instance FromRow Garage where
   fromRow = Garage <$> field <*> field <*> field <*> field <*> field
 
 data CommercialRealEstate = CommercialRealEstate
-  { commercialRealEstateId :: Integer,
-    commercialRealEstateArea :: Int,
+  { commercialRealEstateId         :: Integer,
+    commercialRealEstateArea       :: Int,
     commercialRealEstateObjectType :: Integer,
-    commercialRealEstateAddressId :: Integer,
-    commercialRealEstateOt :: Integer
+    commercialRealEstateAddressId  :: Integer,
+    commercialRealEstateOt         :: Integer
   }
   deriving (Show)
 
@@ -87,15 +87,15 @@ instance FromRow CommercialRealEstate where
   fromRow = CommercialRealEstate <$> field <*> field <*> field <*> field <*> field
 
 data Address = Address
-  { addressId :: Integer,
-    addressState :: String,
-    addressCity :: String,
-    addressDistrict :: String,
-    addressPostalCode :: String,
-    addressStreetName :: String,
+  { addressId          :: Integer,
+    addressState       :: String,
+    addressCity        :: String,
+    addressDistrict    :: String,
+    addressPostalCode  :: String,
+    addressStreetName  :: String,
     addressHouseNumber :: String,
-    addressEntrance :: Maybe Integer,
-    addressDoorNumber :: Maybe Integer
+    addressEntrance    :: Maybe Integer,
+    addressDoorNumber  :: Maybe Integer
   }
   deriving (Show)
 
@@ -280,7 +280,7 @@ getAddressById dataBase addressId = do
   result <- query dataBase (fromString $ "SELECT * FROM addresses WHERE id=? LIMIT 1;") (Only addressId) :: IO [Address]
   case result of
     [address] -> return address
-    _ -> return defaultAddress
+    _         -> return defaultAddress
 
 printAddress :: Address -> IO ()
 printAddress address = do
@@ -293,7 +293,7 @@ printAddress address = do
   putStrLn $ "|  Дом:\t" ++ addressHouseNumber address
   case addressEntrance address of
     Just ent -> putStrLn $ "|  Подъезд:\t" ++ show ent
-    Nothing -> putStrLn "|  Подъезд:\t\tНе указано"
+    Nothing  -> putStrLn "|  Подъезд:\t\tНе указано"
   case addressDoorNumber address of
     Just dn -> putStrLn $ "|  Номер Двери:\t" ++ show dn
     Nothing -> putStrLn "|  Номер Двери:\t\tНе указан"

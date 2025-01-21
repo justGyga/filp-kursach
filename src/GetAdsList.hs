@@ -2,26 +2,29 @@
 
 module GetAdsList where
 
-import Commons (clearCLI)
-import Data.List (find)
-import Data.String (fromString)
-import DataTypes
-import Database.SQLite.Simple
-import Enums (allAdObjectTypes)
-import Filters (districtFilter, maxAreaFilter, maxCostFilter, minAreaFilter, minimalCostFilter, objectTypeFilter, dealTypeFilter)
-import GetAdById (getAdById)
-import SQLplotter (getUserSession)
+import           Commons                (clearCLI)
+import           Data.List              (find)
+import           Data.String            (fromString)
+import           Database.SQLite.Simple
+import           DataTypes
+import           Enums                  (allAdObjectTypes)
+import           Filters                (dealTypeFilter, districtFilter,
+                                         maxAreaFilter, maxCostFilter,
+                                         minAreaFilter, minimalCostFilter,
+                                         objectTypeFilter)
+import           GetAdById              (getAdById)
+import           SQLplotter             (getUserSession)
 
 data Address = Address
-  { addressId :: Integer,
-    state :: String,
-    city :: String,
-    district :: String,
-    postalCode :: String,
-    streetName :: String,
+  { addressId   :: Integer,
+    state       :: String,
+    city        :: String,
+    district    :: String,
+    postalCode  :: String,
+    streetName  :: String,
     houseNumber :: String,
-    entrance :: Maybe Integer,
-    doorNumber :: Maybe Integer
+    entrance    :: Maybe Integer,
+    doorNumber  :: Maybe Integer
   }
   deriving (Show)
 
@@ -43,13 +46,13 @@ instance ToRow Address where
     toRow (addressId, state, city, district, postalCode, streetName, houseNumber, entrance, doorNumber)
 
 data Ad = Ad
-  { adId :: Integer,
-    seller :: Integer,
-    objectId :: Integer,
-    objectType :: Integer,
-    cost :: Float,
+  { adId        :: Integer,
+    seller      :: Integer,
+    objectId    :: Integer,
+    objectType  :: Integer,
+    cost        :: Float,
     description :: String,
-    dealType :: Integer
+    dealType    :: Integer
   }
   deriving (Show)
 
@@ -61,10 +64,10 @@ instance ToRow Ad where
     toRow (adId, seller, objectId, objectType, cost, description, dealType)
 
 data AdWithAddress = AdWithAddress
-  { ad :: Ad,
-    address :: Address,
+  { ad           :: Ad,
+    address      :: Address,
     objectTypeWA :: Integer,
-    area :: Int
+    area         :: Int
   }
   deriving (Show)
 
@@ -145,7 +148,7 @@ printAdWithAddress (AdWithAddress ad addr ot area) = do
   putStrLn $ "|  Номер Дома:\t" ++ houseNumber addr
   case entrance addr of
     Just ent -> putStrLn $ "|  Подъезд:\t" ++ show ent
-    Nothing -> putStrLn $ "|  Подъезд:\t\tНе указано"
+    Nothing  -> putStrLn $ "|  Подъезд:\t\tНе указано"
   case doorNumber addr of
     Just dn -> putStrLn $ "|  Номер Двери:\t" ++ show dn
     Nothing -> putStrLn $ "|  Номер Двери:\t\tНе указан"
@@ -155,14 +158,14 @@ printAdWithAddress (AdWithAddress ad addr ot area) = do
 showDealType :: Integer -> String
 showDealType n = case n of
   1 -> "Аренда"
-  2 -> "Продажа" 
+  2 -> "Продажа"
   _ -> "Неясный тип (" ++ show n ++ ")"
 
 
 showObjectType :: Integer -> String
 showObjectType n = case lookup n allAdObjectTypes of
   Just name -> name
-  Nothing -> "Неизвестный тип объекта"
+  Nothing   -> "Неизвестный тип объекта"
 
 -- | Новая функция для фильтрации доступных объявлений
 filterAvailableAds :: IO ()

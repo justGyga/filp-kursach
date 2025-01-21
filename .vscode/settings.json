@@ -4,5 +4,10 @@
     "unrecognised",
     "VARCHAR",
     "участок"
-  ]
+  ],
+  "haskell.formattingProvider": "stylish-haskell",
+  "[haskell]": {
+    "editor.defaultFormatter": "vigoo.stylish-haskell",
+    "editor.formatOnSave": true
+  }
 }

@@ -2,7 +2,7 @@
 
 module WalletModule where
 
-import Database.SQLite.Simple
+import           Database.SQLite.Simple
 
 createWallet :: Connection -> IO Int
 createWallet db = do

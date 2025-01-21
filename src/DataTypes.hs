@@ -1,25 +1,25 @@
 module DataTypes where
 
-import Database.SQLite.Simple
+import           Database.SQLite.Simple
 
 data RawAdData = RawAdData
-  { rawAdId :: Integer,
-    rawSeller :: Integer,
-    rawObjectId :: Integer,
-    rawObjectType :: Integer,
-    rawCost :: Float,
+  { rawAdId        :: Integer,
+    rawSeller      :: Integer,
+    rawObjectId    :: Integer,
+    rawObjectType  :: Integer,
+    rawCost        :: Float,
     rawDescription :: String,
-    rawDealType :: Integer,
-    rawAddressId :: Integer,
-    rawState :: String,
-    rawCity :: String,
-    rawDistrict :: String,
-    rawPostalCode :: String,
-    rawStreetName :: String,
+    rawDealType    :: Integer,
+    rawAddressId   :: Integer,
+    rawState       :: String,
+    rawCity        :: String,
+    rawDistrict    :: String,
+    rawPostalCode  :: String,
+    rawStreetName  :: String,
     rawHouseNumber :: String,
-    rawEntrance :: Maybe Integer,
-    rawDoorNumber :: Maybe Integer,
-    rawObjectArea :: Int
+    rawEntrance    :: Maybe Integer,
+    rawDoorNumber  :: Maybe Integer,
+    rawObjectArea  :: Int
   }
   deriving (Show)
 
