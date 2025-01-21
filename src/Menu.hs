@@ -3,12 +3,13 @@
 
 module Menu where
 
-import GetAdsList (filterAvailableAds)
-import Commons (clearCLI)
-import GetOwnAds (getOwnAds)
-import GetProfile (getProfile)
-import UserModule (signIn, signUp)
-import CreateAd (createAd)
+import           Commons     (clearCLI)
+import           CreateAd    (createAd)
+import           GetAdsList  (filterAvailableAds)
+import           GetOwnAds   (getOwnAds)
+import           GetOwnDeals (getOwnDeals)
+import           GetProfile  (getProfile)
+import           UserModule  (signIn, signUp)
 
 startMenu :: IO ()
 startMenu = do
@@ -42,7 +43,8 @@ afterAuth = do
   putStrLn "2. Создать объявление"
   putStrLn "3. Просмотреть свой аккаунт"
   putStrLn "4. Просмотреть свои объявления"
-  putStrLn "5. Выход"
+  putStrLn "5. Просмотреть свои сделки"
+  putStrLn "6. Выход"
   putStrLn "Введите выбранный пункт меню:"
 
   choice <- getLine
@@ -63,7 +65,11 @@ afterAuth = do
       clearCLI
       getOwnAds
       afterAuth
-    "5" -> putStrLn "Выход..."
+    "5" -> do
+      clearCLI
+      getOwnDeals
+      afterAuth
+    "6" -> putStrLn "Выход..."
     _ -> do
       putStrLn "Неверный выбор, попробуйте снова."
       afterAuth

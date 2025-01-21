@@ -99,7 +99,7 @@ getOwnAdsService dataBase selfId = do
             ++ "  FROM \"commercialRealEstates\" "
             ++ ") AS objs ON ads.\"objectId\" = objs.id AND ads.\"objectType\" = objs.ot "
             ++ "JOIN addresses ON objs.\"addressId\" = addresses.id "
-            ++ "WHERE seller = ? ORDER BY ads.id ASC"
+            ++ "WHERE seller = ? AND ORDER BY ads.id ASC"
 
   ads <- query dataBase baseQuery (Only selfId) :: IO [RawAdData]
   if null ads
@@ -113,25 +113,29 @@ getOwnAdsService dataBase selfId = do
 
 printAdWithAddress :: RawAdData -> IO ()
 printAdWithAddress ad = do
-  putStrLn $ "ID Объявления:\t" ++ show (rawAdId ad)
-  putStrLn $ "Тип Объекта:\t" ++ showObjectType (rawObjectType ad)
-  putStrLn $ "ID Объекта:\t" ++ show (rawObjectId ad)
-  putStrLn $ "Стоимость:\t" ++ show (rawCost ad) ++ " RUB"
-  putStrLn $ "Описание:\t" ++ rawDescription ad
-  putStrLn "----- Адрес Объекта -----"
-  putStrLn $ "Регион:\t\t" ++ rawState ad
-  putStrLn $ "Город:\t\t" ++ rawCity ad
-  putStrLn $ "Район:\t\t" ++ rawDistrict ad
-  putStrLn $ "Почтовый Код:\t" ++ rawPostalCode ad
-  putStrLn $ "Улица:\t\t" ++ rawStreetName ad
-  putStrLn $ "Номер Дома:\t" ++ rawHouseNumber ad
+  putStrLn $ "|  ID Объявления:\t" ++ show (rawAdId ad)
+  putStrLn $ "|  Тип Объекта:\t" ++ showObjectType (rawObjectType ad)
+  putStrLn $ "|  ID Объекта:\t" ++ show (rawObjectId ad)
+  putStrLn $ "|  Тип сделки:\t" ++ case rawDealType ad of
+    1 -> "Аренда"
+    2 -> "Продажа" 
+    n -> "Неясный тип (" ++ show n ++ ")"
+  putStrLn $ "|  Стоимость:\t" ++ show (rawCost ad) ++ " RUB"
+  putStrLn $ "|  Описание:\t" ++ rawDescription ad
+  putStrLn "+---- Адрес Объекта -----"
+  putStrLn $ "|  Регион:\t\t" ++ rawState ad
+  putStrLn $ "|  Город:\t\t" ++ rawCity ad
+  putStrLn $ "|  Район:\t\t" ++ rawDistrict ad
+  putStrLn $ "|  Почтовый Код:\t" ++ rawPostalCode ad
+  putStrLn $ "|  Улица:\t\t" ++ rawStreetName ad
+  putStrLn $ "|  Номер Дома:\t" ++ rawHouseNumber ad
   case rawEntrance ad of
-    Just ent -> putStrLn $ "Подъезд:\t" ++ show ent
+    Just ent -> putStrLn $ "|  Подъезд:\t" ++ show ent
     Nothing  -> putStrLn "Подъезд:\t\tНе указано"
   case rawDoorNumber ad of
-    Just dn -> putStrLn $ "Номер Двери:\t" ++ show dn
+    Just dn -> putStrLn $ "|  Номер Двери:\t" ++ show dn
     Nothing -> putStrLn "Номер Двери:\t\tНе указан"
-  putStrLn $ "Площадь:\t" ++ show (rawObjectArea ad) ++ " кв.м."
+  putStrLn $ "|  Площадь:\t" ++ show (rawObjectArea ad) ++ " кв.м."
   putStrLn "-----------------------------------"
 
 showObjectType :: Integer -> String

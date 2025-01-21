@@ -89,7 +89,7 @@ dealTypeFilter = do
       putStrLn "2) Продажа"
       input <- getLine
       case reads input :: [(Integer, String)] of
-        [(cost, "")] | cost >= 0 -> return $ " AND ads.\"dealType\" = " ++ show cost
+        [(dealType, "")] | dealType `elem` [1,2] -> return $ " AND ads.\"dealType\"=" ++ show dealType
         _ -> do
           putStrLn "Некорректное значение. Пожалуйста, введите положительное число."
           return ""
