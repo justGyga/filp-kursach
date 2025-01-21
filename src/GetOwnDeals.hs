@@ -106,4 +106,4 @@ printDeals deal = do
   putStrLn $ "Описание:\t" ++ adDescription deal
   putStrLn $ "Тип сделки:\t" ++ show (adDealType deal)
   putStrLn $ "Покупатель:\t" ++ buyerName deal ++ " " ++ buyerSurName deal
-  putStrLn "-----------------------------------"
+  putStrLn "+-------------------------------"

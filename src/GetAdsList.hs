@@ -256,16 +256,26 @@ filterAvailableAds = do
             Just adWithAddr -> do
               clearCLI
               getAdById dataBase (adId (ad adWithAddr))
-              putStrLn "Хотите приобрести объект?"
+              putStrLn "Хотите заключить сделку?"
               putStrLn "1) Да"
               putStrLn "2) Нет"
 
               action <- getLine
               case action of
                 "1" -> do
-                  putStrLn "функционал не реализован"
+                  selfId <- getUserSession
+                  if selfId == -1
+                    then putStrLn "Пользователь не авторизован"
+                    else do
+                      putStrLn "Введите предлагаемую стоимость (RUB):"
+                      finalCostStr <- getLine
+                      case reads finalCostStr :: [(Float, String)] of
+                        [(finalCost, "")] -> do
+                          execute dataBase "INSERT INTO deals (status, date, finalCost, \"adId\", buyer) SELECT 'new', date('now'), ?, id, ? FROM ads WHERE id = ?" (finalCost, selfId, adId (ad adWithAddr))
+                        _ -> putStrLn "Неверный формат стоимости"
+                      putStrLn "Сделка успешно создана и ожидает подтверждения продавца"
                 _ -> do
-                  putStrLn "функционал не реализован"
+                  putStrLn ""
 
             Nothing -> do
               putStrLn "Объявление не найдено"
