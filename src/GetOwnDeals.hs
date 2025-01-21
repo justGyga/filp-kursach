@@ -83,8 +83,8 @@ getOwnDealsService dataBase selfId = do
         ++ "LEFT JOIN ads ON \"adId\" = ads.id "
         ++ "LEFT JOIN users buyers ON buyer = buyers.id "
         ++ "INNER JOIN users sellers ON seller = sellers.id "
-        ++ "WHERE seller = ?"
-  deals <- query dataBase baseQuery (Only selfId) :: IO [Deal]
+        ++ "WHERE seller = ? or buyer = ?"
+  deals <- query dataBase baseQuery (selfId, selfId) :: IO [Deal]
   if null deals
     then do
       putStrLn "У вас нет сделок."
@@ -96,14 +96,14 @@ getOwnDealsService dataBase selfId = do
 
 printDeals :: Deal -> IO ()
 printDeals deal = do
-  putStrLn $ "ID сделки:\t" ++ show (dealId deal)
-  putStrLn $ "Статус:\t\t" ++ show (dealStatus deal)
-  putStrLn $ "Дата:\t\t" ++ dealDate deal
-  putStrLn $ "Итоговая цена:\t" ++ show (dealFinalCost deal) ++ " RUB"
-  putStrLn $ "ID объекта:\t" ++ show (adObjectId deal)
-  putStrLn $ "Тип объекта:\t" ++ show (adObjectType deal)
-  putStrLn $ "Цена объявления:\t" ++ show (adCost deal) ++ " RUB"
-  putStrLn $ "Описание:\t" ++ adDescription deal
-  putStrLn $ "Тип сделки:\t" ++ show (adDealType deal)
-  putStrLn $ "Покупатель:\t" ++ buyerName deal ++ " " ++ buyerSurName deal
+  putStrLn $ "|  ID сделки:\t" ++ show (dealId deal)
+  putStrLn $ "|  Статус:\t\t" ++ show (dealStatus deal)
+  putStrLn $ "|  Дата:\t\t" ++ dealDate deal
+  putStrLn $ "|  Итоговая цена:\t" ++ show (dealFinalCost deal) ++ " RUB"
+  putStrLn $ "|  ID объекта:\t" ++ show (adObjectId deal)
+  putStrLn $ "|  Тип объекта:\t" ++ show (adObjectType deal)
+  putStrLn $ "|  Цена объявления:\t" ++ show (adCost deal) ++ " RUB"
+  putStrLn $ "|  Описание:\t" ++ adDescription deal
+  putStrLn $ "|  Тип сделки:\t" ++ show (adDealType deal)
+  putStrLn $ "|  Покупатель:\t" ++ buyerName deal ++ " " ++ buyerSurName deal
   putStrLn "+-------------------------------"
