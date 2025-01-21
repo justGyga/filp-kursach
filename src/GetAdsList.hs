@@ -8,7 +8,7 @@ import Data.String (fromString)
 import DataTypes
 import Database.SQLite.Simple
 import Enums (allAdObjectTypes)
-import Filters (districtFilter, maxAreaFilter, maxCostFilter, minAreaFilter, minimalCostFilter, objectTypeFilter)
+import Filters (districtFilter, maxAreaFilter, maxCostFilter, minAreaFilter, minimalCostFilter, objectTypeFilter, dealTypeFilter)
 import GetAdById (getAdById)
 import SQLplotter (getUserSession)
 
@@ -48,16 +48,17 @@ data Ad = Ad
     objectId :: Integer,
     objectType :: Integer,
     cost :: Float,
-    description :: String
+    description :: String,
+    dealType :: Integer
   }
   deriving (Show)
 
 instance FromRow Ad where
-  fromRow = Ad <$> field <*> field <*> field <*> field <*> field <*> field
+  fromRow = Ad <$> field <*> field <*> field <*> field <*> field <*> field <*> field
 
 instance ToRow Ad where
-  toRow (Ad adId seller objectId objectType cost description) =
-    toRow (adId, seller, objectId, objectType, cost, description)
+  toRow (Ad adId seller objectId objectType cost description dealType) =
+    toRow (adId, seller, objectId, objectType, cost, description, dealType)
 
 data AdWithAddress = AdWithAddress
   { ad :: Ad,
@@ -77,6 +78,7 @@ instance FromRow AdWithAddress where
     objectType <- field
     cost <- field
     description <- field
+    dealType <- field
 
     -- Чтение полей для Address
     addressId <- field
@@ -93,7 +95,7 @@ instance FromRow AdWithAddress where
     objectTypeWA <- field
     area <- field
 
-    let ad = Ad adId seller objectId objectType cost description
+    let ad = Ad adId seller objectId objectType cost description dealType
     let address = Address addressId state city district postalCode streetName houseNumber entrance doorNumber
 
     return $ AdWithAddress ad address objectTypeWA area
@@ -107,7 +109,8 @@ convertRawToAdWithAddress raw =
             objectId = rawObjectId raw,
             objectType = rawObjectType raw,
             cost = rawCost raw,
-            description = rawDescription raw
+            description = rawDescription raw,
+            dealType = rawDealType raw
           }
       address =
         Address
@@ -123,101 +126,6 @@ convertRawToAdWithAddress raw =
           }
    in AdWithAddress ad address (rawObjectType raw) (rawObjectArea raw)
 
--- | Функция для просмотра всех доступных объявлений с их адресами.
-viewAvailableAds :: IO ()
-viewAvailableAds = do
-  dataBase <- open "local.db"
-  ads <- query_ dataBase "SELECT * FROM ads;" :: IO [Ad] -- Извлекаем все объявления
-  if null ads
-    then putStrLn "Нет доступных объявлений для просмотра." -- Если объявлений нет, выводим сообщение
-    else do
-      adsWithAddress <- mapM (getAdWithAddress dataBase) ads -- Для каждого объявления получаем его адрес и площадь
-      clearCLI
-      putStrLn "\n----- Доступные Объявления -----\n"
-      mapM_ printAdWithAddress adsWithAddress -- Выводим каждое объявление с адресом и площадью
-  close dataBase -- Закрываем соединение с базой данных
-
--- | Функция, объединяющая объявление и его адрес.
-getAdWithAddress :: Connection -> Ad -> IO AdWithAddress
-getAdWithAddress conn ad = do
-  addr <- getAddress conn ad -- Получаем адрес для объявления
-  -- Здесь мы не получаем площадь, поскольку viewAvailableAds не использует фильтрацию
-  -- Площадь будет установлена в 0 или другим значением по умолчанию
-  return $ AdWithAddress ad addr (objectType ad) 0 -- Возвращаем объединённую структуру с площадью = 0
-
--- | Функция для получения адреса объекта на основе типа объекта и его ID.
-getAddress :: Connection -> Ad -> IO Address
-getAddress conn ad = case objectType ad of
-  1 -> getAddressFromFlats conn (objectId ad) -- Если объект - квартира
-  2 -> getAddressFromHouses conn (objectId ad) -- Если объект - дом
-  3 -> getAddressFromLandPlots conn (objectId ad) -- Если объект - земельный участок
-  4 -> getAddressFromGarages conn (objectId ad) -- Если объект - гараж
-  5 -> getAddressFromCommercialRealEstates conn (objectId ad) -- Если объект - коммерческая недвижимость
-  _ -> return defaultAddress -- Неизвестный тип объекта
-
--- | Функция дл получения адреса из таблицы `flats`.
-getAddressFromFlats :: Connection -> Integer -> IO Address
-getAddressFromFlats conn objId = do
-  results <- query conn "SELECT addressId FROM flats WHERE id = ?;" (Only objId) :: IO [Only Integer]
-  case results of
-    [Only addrId] -> getAddressById conn addrId -- Если адрес найден, получаем его детали
-    _ -> return defaultAddress -- Иначе, возвращаем дефолтный адрес
-
--- | Функция для получения адреса из таблицы `houses`.
-getAddressFromHouses :: Connection -> Integer -> IO Address
-getAddressFromHouses conn objId = do
-  results <- query conn "SELECT addressId FROM houses WHERE id = ?;" (Only objId) :: IO [Only Integer]
-  case results of
-    [Only addrId] -> getAddressById conn addrId -- Если адрес найден, получаем его детали
-    _ -> return defaultAddress -- Иначе, возвращаем дефолтный адрес
-
--- | Функция для получения адреса из таблицы `landPlot`.
-getAddressFromLandPlots :: Connection -> Integer -> IO Address
-getAddressFromLandPlots conn objId = do
-  results <- query conn "SELECT addressId FROM landPlot WHERE id = ?;" (Only objId) :: IO [Only Integer]
-  case results of
-    [Only addrId] -> getAddressById conn addrId -- Если адрес найден, получаем его детали
-    _ -> return defaultAddress -- Иначе, возвращаем дефолтный адрес
-
--- | Функция для получения адреса из таблицы `garages`.
-getAddressFromGarages :: Connection -> Integer -> IO Address
-getAddressFromGarages conn objId = do
-  results <- query conn "SELECT addressId FROM garages WHERE id = ?;" (Only objId) :: IO [Only Integer]
-  case results of
-    [Only addrId] -> getAddressById conn addrId -- Если адрес найден, получаем его детали
-    _ -> return defaultAddress -- Иначе, возвращаем дефолтный адрес
-
--- | Функция для получения адреса из таблицы `commercialRealEstates`.
-getAddressFromCommercialRealEstates :: Connection -> Integer -> IO Address
-getAddressFromCommercialRealEstates conn objId = do
-  results <- query conn "SELECT addressId FROM commercialRealEstates WHERE id = ?;" (Only objId) :: IO [Only Integer]
-  case results of
-    [Only addrId] -> getAddressById conn addrId -- Если адрес найден, получаем его
-    _ -> return defaultAddress -- Иначе, возвращаем дефолтный адрес
-
--- | Функция для получения полной информации об адресе по `addressId`.
-getAddressById :: Connection -> Integer -> IO Address
-getAddressById conn addrId = do
-  results <- query conn "SELECT * FROM addresses WHERE id = ?;" (Only addrId) :: IO [Address]
-  case results of
-    [addr] -> return addr -- Если адрес найден, возвращаем его
-    _ -> return defaultAddress -- Иначе, возвращаем дефолтный адрес
-
--- | Дефолтный адрес для случаев, когда информация недоступна.
-defaultAddress :: Address
-defaultAddress =
-  Address
-    { addressId = -1,
-      state = "Неизвестно",
-      city = "Неизвестно",
-      district = "Неизвестно",
-      postalCode = "Неизвестно",
-      streetName = "Неизвестно",
-      houseNumber = "Неизвестно",
-      entrance = Nothing,
-      doorNumber = Nothing
-    }
-
 -- | Вспомогательная функция для форматирования и вывода объявления вместе с адресом и площадью.
 printAdWithAddress :: AdWithAddress -> IO ()
 printAdWithAddress (AdWithAddress ad addr ot area) = do
@@ -225,6 +133,7 @@ printAdWithAddress (AdWithAddress ad addr ot area) = do
   putStrLn $ "|  ID Продавца:\t" ++ show (seller ad)
   putStrLn $ "|  Тип Объекта:\t" ++ showObjectType (objectType ad)
   putStrLn $ "|  ID Объекта:\t" ++ show (objectId ad)
+  putStrLn $ "|  Тип сделки:\t" ++ showDealType (dealType ad)
   putStrLn $ "|  Стоимость:\t" ++ show (cost ad) ++ " RUB"
   putStrLn $ "|  Описание:\t" ++ description ad
   putStrLn "+- Адрес Объекта -----"
@@ -242,6 +151,13 @@ printAdWithAddress (AdWithAddress ad addr ot area) = do
     Nothing -> putStrLn $ "|  Номер Двери:\t\tНе указан"
   putStrLn $ "|  Площадь:\t" ++ show area ++ " кв.м."
   putStrLn "+--------------------------------"
+
+showDealType :: Integer -> String
+showDealType n = case n of
+  1 -> "Аренда"
+  2 -> "Продажа" 
+  _ -> "Неясный тип (" ++ show n ++ ")"
+
 
 showObjectType :: Integer -> String
 showObjectType n = case lookup n allAdObjectTypes of
@@ -262,10 +178,11 @@ filterAvailableAds = do
   maxCostFilterQuery <- maxCostFilter
   minAreaFilterQuery <- minAreaFilter
   maxAreaFilterQuery <- maxAreaFilter
+  dealTypeQuery <- dealTypeFilter
   clearCLI
 
   currentUserId <- getUserSession
-  let sellerFilter = "ads.seller != " ++ show currentUserId
+  let sellerFilter = "deals.status = 'new' AND ads.seller != " ++ show currentUserId
 
   let baseQuery =
         "SELECT "
@@ -275,6 +192,7 @@ filterAvailableAds = do
           ++ "ads.\"objectType\", "
           ++ "ads.cost, "
           ++ "ads.description, "
+          ++ "ads.\"dealType\", "
           ++ "addresses.id AS addressId, "
           ++ "addresses.state, "
           ++ "addresses.city, "
@@ -302,12 +220,13 @@ filterAvailableAds = do
           ++ "  SELECT id, area, \"addressId\", ot "
           ++ "  FROM \"commercialRealEstates\" "
           ++ ") AS objs ON ads.\"objectId\" = objs.id AND ads.\"objectType\" = objs.ot "
+          ++ "INNER JOIN deals ON ads.id = deals.\"adId\""
           ++ "JOIN addresses ON objs.\"addressId\" = addresses.id "
           ++ "WHERE "
           ++ sellerFilter -- Начало условий WHERE
 
   -- Построение условий WHERE и списка параметров
-  let conditions = districtFilterQuery ++ objectTypeFilterQuery ++ minimalCostFilterQuery ++ maxCostFilterQuery ++ minAreaFilterQuery ++ maxAreaFilterQuery
+  let conditions = districtFilterQuery ++ objectTypeFilterQuery ++ minimalCostFilterQuery ++ maxCostFilterQuery ++ minAreaFilterQuery ++ maxAreaFilterQuery ++ dealTypeQuery
 
   -- Полный запрос
   let finalQuery = baseQuery ++ conditions ++ " ORDER BY ads.id ASC"
@@ -334,6 +253,17 @@ filterAvailableAds = do
             Just adWithAddr -> do
               clearCLI
               getAdById dataBase (adId (ad adWithAddr))
+              putStrLn "Хотите приобрести объект?"
+              putStrLn "1) Да"
+              putStrLn "2) Нет"
+
+              action <- getLine
+              case action of
+                "1" -> do
+                  putStrLn "функционал не реализован"
+                _ -> do
+                  putStrLn "функционал не реализован"
+
             Nothing -> do
               putStrLn "Объявление не найдено"
               filterAvailableAds

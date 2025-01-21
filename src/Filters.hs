@@ -76,6 +76,26 @@ minimalCostFilter = do
           return ""
     _ -> return ""
 
+dealTypeFilter :: IO String
+dealTypeFilter = do
+  putStrLn "\n------- Тип сделки -----------\n"
+  putStrLn "1. Ввести значение"
+  putStrLn "_. Пропустить"
+  dealTypeChoice <- getLine
+  case dealTypeChoice of
+    "1" -> do
+      putStrLn "Введите тип сделки:"
+      putStrLn "1) Аренда"
+      putStrLn "2) Продажа"
+      input <- getLine
+      case reads input :: [(Integer, String)] of
+        [(cost, "")] | cost >= 0 -> return $ " AND ads.\"dealType\" = " ++ show cost
+        _ -> do
+          putStrLn "Некорректное значение. Пожалуйста, введите положительное число."
+          return ""
+      
+    _ -> return ""
+
 maxCostFilter :: IO String
 maxCostFilter = do
   putStrLn "\n----- Максимальная стоимость -----\n"

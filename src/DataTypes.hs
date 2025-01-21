@@ -9,6 +9,7 @@ data RawAdData = RawAdData
     rawObjectType :: Integer,
     rawCost :: Float,
     rawDescription :: String,
+    rawDealType :: Integer,
     rawAddressId :: Integer,
     rawState :: String,
     rawCity :: String,
@@ -31,6 +32,7 @@ instance FromRow RawAdData where
       <*> field -- objectType
       <*> field -- cost
       <*> field -- description
+      <*> field -- dealType
       <*> field -- addressId
       <*> field -- state
       <*> field -- city

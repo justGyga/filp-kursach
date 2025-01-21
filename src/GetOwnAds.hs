@@ -70,6 +70,7 @@ getOwnAdsService dataBase selfId = do
             ++ "ads.\"objectType\", "
             ++ "ads.cost, "
             ++ "ads.description, "
+            ++ "ads.\"dealType\", "
             ++ "addresses.id AS addressId, "
             ++ "addresses.state, "
             ++ "addresses.city, "
