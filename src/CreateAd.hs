@@ -88,7 +88,7 @@ createAdService dataBase objectType ownerId objectId dealType = do
 
   adId <- getLastId dataBase
 
-  clearCLI
+  -- clearCLI
 
   putStrLn "\nОбъявление о продаже квартиры успешно создано! ID объявления: "
   putStrLn $ show adId

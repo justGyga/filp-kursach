@@ -18,17 +18,22 @@ getOwnAds = do
   if selfId == -1
     then putStrLn "Пользователь не авторизован"
     else do
-      ids <- getOwnAdsService dataBase selfId
-      if null ids then putStrLn "У вас нет активных объявлений."
+      ads <- getOwnAdsService dataBase selfId
+      if null ads then putStrLn "У вас нет активных объявлений."
       else do
+        putStrLn "\n----- Ваши Объявления -----\n"
+        mapM_ printAdWithAddress ads
+        -- print ads
+        let ids = map rawAdId ads
+        -- print ids
         choice <- selectAdId ids
         case choice of
           Just adId -> do
             getAdById dataBase adId
             putStrLn "----- Выберите действие -----"
-            putStrLn "1) Отредактировать объявление"
-            putStrLn "2) Удалить объявление"
-            putStrLn "Покинуть"
+            putStrLn "1. Отредактировать объявление"
+            putStrLn "2. Удалить объявление"
+            putStrLn "_. Покинуть"
 
             action <- getLine
             case action of
@@ -36,8 +41,7 @@ getOwnAds = do
                 editAd dataBase adId
               "2" -> do
                 deleteAd dataBase adId
-              _ -> do
-                putStrLn "Функционал не реализован"
+              _ -> return ()
           Nothing -> return ()
         return ()
   close dataBase
@@ -61,7 +65,7 @@ selectAdId ids = do
             selectAdId ids
 
 
-getOwnAdsService :: Connection -> Integer -> IO [Integer]
+getOwnAdsService :: Connection -> Integer -> IO [RawAdData]
 getOwnAdsService dataBase selfId = do
   let baseQuery =
         fromString $
@@ -104,13 +108,7 @@ getOwnAdsService dataBase selfId = do
             ++ "WHERE seller = ? ORDER BY ads.id ASC"
 
   ads <- query dataBase baseQuery (Only selfId) :: IO [RawAdData]
-  if null ads
-    then do
-      return []
-    else do
-      putStrLn "\n----- Ваши Объявления -----\n"
-      mapM_ printAdWithAddress ads
-      return $ map rawObjectId ads
+  return ads
 
 printAdWithAddress :: RawAdData -> IO ()
 printAdWithAddress ad = do
@@ -132,12 +130,12 @@ printAdWithAddress ad = do
   putStrLn $ "|  Номер Дома:\t" ++ rawHouseNumber ad
   case rawEntrance ad of
     Just ent -> putStrLn $ "|  Подъезд:\t" ++ show ent
-    Nothing  -> putStrLn "Подъезд:\t\tНе указано"
+    Nothing  -> putStrLn "|  Подъезд:\t\tНе указано"
   case rawDoorNumber ad of
     Just dn -> putStrLn $ "|  Номер Двери:\t" ++ show dn
-    Nothing -> putStrLn "Номер Двери:\t\tНе указан"
+    Nothing -> putStrLn "|  Номер Двери:\t\tНе указан"
   putStrLn $ "|  Площадь:\t" ++ show (rawObjectArea ad) ++ " кв.м."
-  putStrLn "-----------------------------------"
+  putStrLn "+----------------------------------"
 
 showObjectType :: Integer -> String
 showObjectType n = case lookup n allAdObjectTypes of
