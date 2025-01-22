@@ -19,25 +19,27 @@ getOwnAds = do
     then putStrLn "Пользователь не авторизован"
     else do
       ids <- getOwnAdsService dataBase selfId
-      choice <- selectAdId ids
-      case choice of
-        Just adId -> do
-          getAdById dataBase adId
-          putStrLn "----- Выберите действие -----"
-          putStrLn "1) Отредактировать объявление"
-          putStrLn "2) Удалить объявление"
-          putStrLn "Покинуть"
+      if null ids then putStrLn "У вас нет активных объявлений."
+      else do
+        choice <- selectAdId ids
+        case choice of
+          Just adId -> do
+            getAdById dataBase adId
+            putStrLn "----- Выберите действие -----"
+            putStrLn "1) Отредактировать объявление"
+            putStrLn "2) Удалить объявление"
+            putStrLn "Покинуть"
 
-          action <- getLine
-          case action of
-            "1" -> do
-              editAd dataBase adId
-            "2" -> do
-              deleteAd dataBase adId
-            _ -> do
-              putStrLn "Функционал не реализован"
-        Nothing -> return ()
-      return ()
+            action <- getLine
+            case action of
+              "1" -> do
+                editAd dataBase adId
+              "2" -> do
+                deleteAd dataBase adId
+              _ -> do
+                putStrLn "Функционал не реализован"
+          Nothing -> return ()
+        return ()
   close dataBase
 
 
@@ -99,12 +101,11 @@ getOwnAdsService dataBase selfId = do
             ++ "  FROM \"commercialRealEstates\" "
             ++ ") AS objs ON ads.\"objectId\" = objs.id AND ads.\"objectType\" = objs.ot "
             ++ "JOIN addresses ON objs.\"addressId\" = addresses.id "
-            ++ "WHERE seller = ? AND ORDER BY ads.id ASC"
+            ++ "WHERE seller = ? ORDER BY ads.id ASC"
 
   ads <- query dataBase baseQuery (Only selfId) :: IO [RawAdData]
   if null ads
     then do
-      putStrLn "У вас нет активных объявлений."
       return []
     else do
       putStrLn "\n----- Ваши Объявления -----\n"

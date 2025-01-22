@@ -43,31 +43,33 @@ getOwnDeals = do
       then putStrLn "Пользователь не авторизован"
     else do
         ids <- getOwnDealsService dataBase selfId
-        putStrLn "Хотите отклонить сделку?"
-        putStrLn "1) Да"
-        putStrLn "_) Нет"
+        if null ids then putStrLn "У вас нет сделок."
+        else do
+          putStrLn "Хотите отклонить сделку?"
+          putStrLn "1) Да"
+          putStrLn "_) Нет"
 
-        choice <- getLine
-        case choice of
-          "1" -> do
-            putStrLn "\nВыберите ID сделки для отклонения или введите 'q' для отмены:"
-            input <- getLine
-            case input of
-              "q" -> return ()
-              _ -> case reads input of
-                [(n, "")] -> if n `elem` ids
-                            then do
-                              deal <- query dataBase "SELECT status FROM deals WHERE id = ?" (Only n) :: IO [Only String]
-                              case deal of
-                                [Only status] -> if status `elem` ["close", "reject"]
-                                               then putStrLn "Нельзя отклонить сделку с таким статусом"
-                                               else do
-                                                 execute dataBase "UPDATE deals SET status = 'rejected' WHERE id = ?" (Only n)
-                                                 putStrLn "Сделка успешно отклонена"
-                                _ -> putStrLn "Сделка не найдена"
-                            else putStrLn "Неверный ID сделки"
-                _ -> putStrLn "Неверный ввод"
-          _ -> return ()
+          choice <- getLine
+          case choice of
+            "1" -> do
+              putStrLn "\nВыберите ID сделки для отклонения или введите 'q' для отмены:"
+              input <- getLine
+              case input of
+                "q" -> return ()
+                _ -> case reads input of
+                  [(n, "")] -> if n `elem` ids
+                              then do
+                                deal <- query dataBase "SELECT status FROM deals WHERE id = ?" (Only n) :: IO [Only String]
+                                case deal of
+                                  [Only status] -> if status `elem` ["close", "reject"]
+                                                then putStrLn "Нельзя отклонить сделку с таким статусом"
+                                                else do
+                                                  execute dataBase "UPDATE deals SET status = 'rejected' WHERE id = ?" (Only n)
+                                                  putStrLn "Сделка успешно отклонена"
+                                  _ -> putStrLn "Сделка не найдена"
+                              else putStrLn "Неверный ID сделки"
+                  _ -> putStrLn "Неверный ввод"
+            _ -> return ()
     close dataBase
 
 
@@ -87,7 +89,6 @@ getOwnDealsService dataBase selfId = do
   deals <- query dataBase baseQuery (selfId, selfId) :: IO [Deal]
   if null deals
     then do
-      putStrLn "У вас нет сделок."
       return []
     else do
       putStrLn "---- Ваши Сделки ----"

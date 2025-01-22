@@ -185,7 +185,7 @@ filterAvailableAds = do
   clearCLI
 
   currentUserId <- getUserSession
-  let sellerFilter = "deals.status = 'new' AND ads.seller != " ++ show currentUserId
+  let sellerFilter = "ads.seller != " ++ show currentUserId
 
   let baseQuery =
         "SELECT "
@@ -223,7 +223,6 @@ filterAvailableAds = do
           ++ "  SELECT id, area, \"addressId\", ot "
           ++ "  FROM \"commercialRealEstates\" "
           ++ ") AS objs ON ads.\"objectId\" = objs.id AND ads.\"objectType\" = objs.ot "
-          ++ "INNER JOIN deals ON ads.id = deals.\"adId\""
           ++ "JOIN addresses ON objs.\"addressId\" = addresses.id "
           ++ "WHERE "
           ++ sellerFilter -- Начало условий WHERE
@@ -233,6 +232,7 @@ filterAvailableAds = do
 
   -- Полный запрос
   let finalQuery = baseQuery ++ conditions ++ " ORDER BY ads.id ASC"
+  putStrLn finalQuery
 
   [Only totalCount] <- query_ dataBase (fromString $ "SELECT COUNT(id) FROM (" ++ finalQuery ++ ") AS filteredAds") :: IO [Only Integer]
   -- Выводим количество найденных записей
